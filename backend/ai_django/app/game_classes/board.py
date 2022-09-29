@@ -5,35 +5,36 @@ from .pieces.bishop import Bishop
 from .pieces.rook import Rook
 from .pieces.queen import Queen
 from .pieces.king import King
-from .constants import PAWNS, ROOKS, KNIGHTS, BISHOPS, QUEENS, KING
+from .constants import PIECE_TYPES
+PAWNS, ROOKS, KNIGHTS, BISHOPS, QUEENS, KING = PIECE_TYPES
 
 
 class Board:
     def __init__(self) -> None:
         self.board = []
-        self.white_pieces = {}
-        self.black_pieces = {}
+        self.white_pieces = {'colour': 'white'}
+        self.black_pieces = {'colour': 'black'}
+        self.player_pieces = (self.white_pieces, self.black_pieces)
         self.setup_pieces()
         self.setup_board()
 
     def setup_pieces(self) -> None:
-        pieces = [self.white_pieces, self.black_pieces]
-        for i in range(2):
-            base_row = 0 if i == 0 else 7
+        for pieces in self.player_pieces:
+            base_row = 0 if pieces['color'] == 'white' else 7
             pawn_row = base_row + (base_row == 0) - (base_row != 0)
-            pieces[i][PAWNS] = [Pawn(x, [pawn_row, x]) for x in range(8)]
-            pieces[i][ROOKS] = [
+            pieces[PAWNS] = [Pawn(x, [pawn_row, x]) for x in range(8)]
+            pieces[ROOKS] = [
                 Rook(0, [base_row, 0]),
                 Rook(1, [base_row, 7])
             ]
-            pieces[i][KNIGHTS] = [
+            pieces[KNIGHTS] = [
                 Knight(0, [base_row, 1]), Knight(1, [base_row, 6])
             ]
-            pieces[i][BISHOPS] = [
+            pieces[BISHOPS] = [
                 Bishop(0, [base_row, 2]), Bishop(1, [base_row, 5])
             ]
-            pieces[i][QUEENS] = [Queen(0, [base_row, 3])]
-            pieces[i][KING] = King(0, [base_row, 4])
+            pieces[QUEENS] = [Queen(0, [base_row, 3])]
+            pieces[KING] = King(0, [base_row, 4])
 
     def setup_board(self) -> None:
         self.board = [
@@ -64,6 +65,12 @@ class Board:
                 self.black_pieces[ROOKS][1],
             ],
         ]
+
+    def calculate_legal_moves(self) -> None:
+        for pieces in self.player_pieces:
+            for type in PIECE_TYPES:
+                for piece in pieces[type]:
+                    piece.calculate_moves()
 
     def make_move(self) -> None:
         pass
