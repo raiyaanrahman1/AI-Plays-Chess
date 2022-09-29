@@ -1,0 +1,6 @@
+PAWNS = 'p'
+KNIGHTS = 'n'
+BISHOPS = 'b'
+ROOKS = 'r'
+QUEENS = 'q'
+KING = 'k'
