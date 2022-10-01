@@ -22,19 +22,23 @@ class Board:
         for pieces in self.player_pieces:
             base_row = 0 if pieces['color'] == 'white' else 7
             pawn_row = base_row + (base_row == 0) - (base_row != 0)
-            pieces[PAWNS] = [Pawn(x, [pawn_row, x]) for x in range(8)]
+            pieces[PAWNS] = [
+                Pawn(x, (pawn_row, x), pieces['colour']) for x in range(8)
+            ]
             pieces[ROOKS] = [
-                Rook(0, [base_row, 0]),
-                Rook(1, [base_row, 7])
+                Rook(0, (base_row, 0), pieces['colour']),
+                Rook(1, (base_row, 7), pieces['colour'])
             ]
             pieces[KNIGHTS] = [
-                Knight(0, [base_row, 1]), Knight(1, [base_row, 6])
+                Knight(0, (base_row, 1), pieces['colour']),
+                Knight(1, (base_row, 6), pieces['colour'])
             ]
             pieces[BISHOPS] = [
-                Bishop(0, [base_row, 2]), Bishop(1, [base_row, 5])
+                Bishop(0, (base_row, 2), pieces['colour']),
+                Bishop(1, (base_row, 5), pieces['colour'])
             ]
-            pieces[QUEENS] = [Queen(0, [base_row, 3])]
-            pieces[KING] = King(0, [base_row, 4])
+            pieces[QUEENS] = [Queen(0, (base_row, 3), pieces['colour'])]
+            pieces[KING] = King(0, (base_row, 4), pieces['colour'])
 
     def setup_board(self) -> None:
         self.board = [
@@ -70,7 +74,7 @@ class Board:
         for pieces in self.player_pieces:
             for type in PIECE_TYPES:
                 for piece in pieces[type]:
-                    piece.calculate_moves()
+                    piece.calculate_moves(self.board)
 
     def make_move(self) -> None:
         pass
