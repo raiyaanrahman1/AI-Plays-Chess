@@ -32,21 +32,16 @@ class Pawn(Piece):
             self.legal_moves.append(two_up_loc)
 
         if (left_diag['inBounds']
-                and (
-                        board[left_diag_loc[0]][left_diag_loc[1]] is None
-                        or board[left_diag_loc[0]][left_diag_loc[1]].colour
-                        != self.colour
-                    )):
+                and board[left_diag_loc[0]][left_diag_loc[1]] is not None
+                and board[left_diag_loc[0]][left_diag_loc[1]].colour != self.colour):
             self.legal_moves.append(left_diag_loc)
 
         if (right_diag['inBounds']
-                and (
-                        board[right_diag_loc[0]][right_diag_loc[1]] is None
-                        or board[right_diag_loc[0]][right_diag_loc[1]].colour
-                        != self.colour
-                    )):
+                and board[right_diag_loc[0]][right_diag_loc[1]] is not None
+                and board[right_diag_loc[0]][right_diag_loc[1]].colour != self.colour):
             self.legal_moves.append(right_diag_loc)
 
+        # TODO: for en-passent, also need to check if the pawn moved 2 spaces, not 1
         if (self.row == starting_row + direction * 3
                 and left_diag['inBounds']
                 and board[self.row][self.col - 1] is not None

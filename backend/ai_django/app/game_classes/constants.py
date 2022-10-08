@@ -11,5 +11,4 @@ PIECE_TYPES = (
     BISHOPS,
     ROOKS,
     QUEENS,
-    KING
 )

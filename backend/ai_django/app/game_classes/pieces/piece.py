@@ -9,5 +9,5 @@ class Piece:
         self.legal_moves = []
 
     @abstractmethod
-    def calculate_moves(self, board) -> None:
+    def calculate_moves(self, board, move_history) -> None:
         pass

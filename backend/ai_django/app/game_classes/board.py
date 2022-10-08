@@ -6,7 +6,8 @@ from .pieces.rook import Rook
 from .pieces.queen import Queen
 from .pieces.king import King
 from .constants import PIECE_TYPES
-PAWNS, ROOKS, KNIGHTS, BISHOPS, QUEENS, KING = PIECE_TYPES
+from .constants import KING
+PAWNS, ROOKS, KNIGHTS, BISHOPS, QUEENS = PIECE_TYPES
 
 
 class Board:
@@ -15,12 +16,13 @@ class Board:
         self.white_pieces = {'colour': 'white'}
         self.black_pieces = {'colour': 'black'}
         self.player_pieces = (self.white_pieces, self.black_pieces)
+        self.move_history = []
         self.setup_pieces()
         self.setup_board()
 
     def setup_pieces(self) -> None:
         for pieces in self.player_pieces:
-            base_row = 0 if pieces['color'] == 'white' else 7
+            base_row = 0 if pieces['colour'] == 'white' else 7
             pawn_row = base_row + (base_row == 0) - (base_row != 0)
             pieces[PAWNS] = [
                 Pawn(x, (pawn_row, x), pieces['colour']) for x in range(8)
@@ -72,9 +74,10 @@ class Board:
 
     def calculate_legal_moves(self) -> None:
         for pieces in self.player_pieces:
+            pieces[KING].calculate_moves(self.board, self.move_history)
             for type in PIECE_TYPES:
                 for piece in pieces[type]:
-                    piece.calculate_moves(self.board)
+                    piece.calculate_moves(self.board, self.move_history)
 
     def make_move(self) -> None:
         pass
