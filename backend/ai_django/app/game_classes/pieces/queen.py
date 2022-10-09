@@ -1,6 +1,12 @@
 from .piece import Piece
+from .bishop import Bishop
+from .rook import Rook
 
 
 class Queen(Piece):
     def calculate_moves(self, board, move_history) -> None:
-        pass
+        bishop = Bishop(-1, (self.row, self.col), self.colour)
+        rook = Rook(-1, (self.row, self.col), self.colour)
+        bishop.calculate_moves(board, move_history)
+        rook.calculate_moves(board, move_history)
+        self.legal_moves = bishop.legal_moves + rook.legal_moves
