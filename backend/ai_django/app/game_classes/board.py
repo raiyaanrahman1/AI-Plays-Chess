@@ -7,7 +7,7 @@ from .pieces.queen import Queen
 from .pieces.king import King
 from .constants import PIECE_TYPES
 from .constants import KING
-PAWNS, ROOKS, KNIGHTS, BISHOPS, QUEENS = PIECE_TYPES
+PAWNS, KNIGHTS, BISHOPS, ROOKS, QUEENS = PIECE_TYPES
 
 
 class Board:
