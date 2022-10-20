@@ -11,5 +11,5 @@ class GameTests(TestCase):
     def test_game(self):
         from .game_classes.game import Game
         game = Game()
-        game.board.calculate_legal_moves()
-        print(game.board)
+        game.calculate_legal_moves()
+        print(game)
