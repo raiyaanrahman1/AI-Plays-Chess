@@ -4,16 +4,14 @@ from ..utilities import in_bounds
 
 class Knight(Piece):
     def calculate_moves(self, board, move_history) -> None:
-        direction = 1 if self.colour == 'white' else -1
-
-        up_two_left = (self.row + 2 * direction, self.col - 1)
-        up_two_right = (self.row + 2 * direction, self.col + 1)
-        left_two_up = (self.row + 1 * direction, self.col - 2)
-        left_two_down = (self.row - 1 * direction, self.col - 2)
-        right_two_up = (self.row + 1 * direction, self.col + 2)
-        right_two_down = (self.row - 1 * direction, self.col + 2)
-        down_two_left = (self.row - 2 * direction, self.col - 1)
-        down_two_right = (self.row - 2 * direction, self.col + 1)
+        up_two_left = (self.row + 2 * self.direction, self.col - 1)
+        up_two_right = (self.row + 2 * self.direction, self.col + 1)
+        left_two_up = (self.row + 1 * self.direction, self.col - 2)
+        left_two_down = (self.row - 1 * self.direction, self.col - 2)
+        right_two_up = (self.row + 1 * self.direction, self.col + 2)
+        right_two_down = (self.row - 1 * self.direction, self.col + 2)
+        down_two_left = (self.row - 2 * self.direction, self.col - 1)
+        down_two_right = (self.row - 2 * self.direction, self.col + 1)
 
         moves = (
             up_two_left,

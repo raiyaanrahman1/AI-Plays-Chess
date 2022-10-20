@@ -6,14 +6,13 @@ class Pawn(Piece):
 
     def calculate_moves(self, board, move_history) -> None:
         starting_row = 1 if self.colour == 'white' else 6
-        direction = 1 if self.colour == 'white' else -1
 
         self.legal_moves = []
 
-        one_up = (self.row + 1 * direction, self.col)
-        two_up = (self.row + 2 * direction, self.col)
-        left_diag = (self.row + 1 * direction, self.col - 1)
-        right_diag = (self.row + 1 * direction, self.col + 1)
+        one_up = (self.row + 1 * self.direction, self.col)
+        two_up = (self.row + 2 * self.direction, self.col)
+        left_diag = (self.row + 1 * self.direction, self.col - 1)
+        right_diag = (self.row + 1 * self.direction, self.col + 1)
 
         if in_bounds(one_up) and board[one_up[0]][one_up[1]] is None:
             self.legal_moves.append(one_up)
@@ -34,7 +33,7 @@ class Pawn(Piece):
             self.legal_moves.append(right_diag)
 
         # TODO: for en-passent, also need to check if the pawn moved 2 spaces, not 1
-        if (self.row == starting_row + direction * 3
+        if (self.row == starting_row + self.direction * 3
                 and in_bounds(left_diag)
                 and board[self.row][self.col - 1] is not None
                 and isinstance(board[self.row][self.col - 1], Pawn)
@@ -45,7 +44,7 @@ class Pawn(Piece):
                 board[self.row][self.col - 1].id):
             self.legal_moves.append(left_diag)
 
-        if (self.row == starting_row + direction * 3
+        if (self.row == starting_row + self.direction * 3
                 and in_bounds(right_diag)
                 and board[self.row][self.col + 1] is not None
                 and isinstance(board[self.row][self.col + 1], Pawn)

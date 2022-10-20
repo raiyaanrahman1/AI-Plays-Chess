@@ -1,3 +1,4 @@
+from utilities import in_bounds
 from .pieces.pawn import Pawn
 from .pieces.knight import Knight
 from .pieces.bishop import Bishop
@@ -12,6 +13,7 @@ PAWNS, KNIGHTS, BISHOPS, ROOKS, QUEENS = PIECE_TYPES
 class Player:
     def __init__(self, colour) -> None:
         self.colour = colour
+        self.direction = 1 if self.colour == 'white' else -1
         self.pieces = self.setup_pieces()
 
     def setup_pieces(self) -> None:
@@ -39,6 +41,37 @@ class Player:
 
     def calculate_legal_moves(self, board, move_history):
         self.pieces[KING].calculate_moves(board, move_history)
-        for type in PIECE_TYPES:
-            for piece in self.pieces[type]:
+        for piece_type in PIECE_TYPES:
+            for piece in self.pieces[piece_type]:
                 piece.calculate_moves(board, move_history)
+
+    # filters the pieces moves such that after the move is made, the player's king is not in check
+    def validate_moves(self, board, piece):
+        pass
+
+    def in_check(self, board, other_player) -> bool:
+        for piece_type in [KNIGHTS, BISHOPS, ROOKS, QUEENS]:
+            for piece in other_player[piece_type]:
+                if self.pieces[KING].loc in other_player[piece_type][piece].legal_moves:
+                    return True
+
+        # the other King can't actually put the player in check
+        # this is simply to prevent the kings from being adjacent
+        if self.pieces[KING].loc in other_player[KING].legal_moves:
+            return True
+
+        left_diag = (self.row + 1 * self.direction, self.col - 1)
+        right_diag = (self.row + 1 * self.direction, self.col + 1)
+
+        for loc in (left_diag, right_diag):
+            if not in_bounds(loc):
+                continue
+            board_at_loc = board[loc[0]][loc[1]]
+            if (
+                board_at_loc is not None
+                and board_at_loc.colour != self.colour
+                and isinstance(board_at_loc, Pawn)
+            ):
+                return True
+
+        return False
