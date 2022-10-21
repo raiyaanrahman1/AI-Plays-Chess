@@ -1,4 +1,5 @@
 from .piece import Piece
+from ..constants import KING
 from ..utilities import in_bounds
 
 
@@ -7,6 +8,9 @@ class King(Piece):
         super().__init__(id, loc, colour)
         self.short_castle_rights = True
         self.long_castle_rights = True
+
+    def get_type(self):
+        return KING
 
     # TODO: finish - figure out check and castling
     def calculate_moves(self, board, move_history) -> None:

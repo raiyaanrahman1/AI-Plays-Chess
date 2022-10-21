@@ -1,8 +1,12 @@
 from .piece import Piece
+from ..constants import BISHOPS
 from ..utilities import in_bounds
 
 
 class Bishop(Piece):
+    def get_type(self):
+        return BISHOPS
+
     def calculate_moves_in_direction(self, x_direction, y_direction, board):
         x = self.row
         y = self.col

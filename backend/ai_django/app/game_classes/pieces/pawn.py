@@ -1,8 +1,11 @@
 from .piece import Piece
+from ..constants import PAWNS
 from ..utilities import in_bounds
 
 
 class Pawn(Piece):
+    def get_type(self):
+        return PAWNS
 
     def calculate_moves(self, board, move_history) -> None:
         starting_row = 1 if self.colour == 'white' else 6
@@ -35,10 +38,10 @@ class Pawn(Piece):
                 self.row == starting_row + self.direction * 3
                 and in_bounds(loc)
                 and board[self.row][loc[1]] is not None
-                and isinstance(board[self.row][loc[1]], Pawn)
+                and board[self.row][loc[1]].get_type() == PAWNS
                 and board[self.row][loc[1]].colour != self.colour
                 and len(move_history) > 0
-                and isinstance(move_history[-1].piece, Pawn)
+                and move_history[-1].piece.get_type() == PAWNS
                 and move_history[-1].piece.id == board[self.row][loc[1]].id
             ):
                 self.legal_moves.append(loc)

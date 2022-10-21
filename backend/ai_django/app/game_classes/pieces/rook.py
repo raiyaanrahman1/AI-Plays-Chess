@@ -1,8 +1,12 @@
 from .piece import Piece
+from ..constants import ROOKS
 from ..utilities import in_bounds
 
 
 class Rook(Piece):
+    def get_type(self):
+        return ROOKS
+
     def calculate_moves_in_direction(self, direction, sign, board):
         x = self.row
         y = self.col

@@ -50,7 +50,8 @@ class Game:
             player.calculate_legal_moves(self.board, self.move_history)
 
     def make_move(self, from_loc, to_loc):
-        try:
-            self.board.make_move(from_loc, to_loc)
-        except Exception as err:
-            print(str(err))
+        pass
+        # try:
+        #     self.board.make_move(from_loc, to_loc)
+        # except Exception as err:
+        #     print(str(err))

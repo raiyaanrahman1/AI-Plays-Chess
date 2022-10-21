@@ -1,8 +1,12 @@
 from .piece import Piece
+from ..constants import KNIGHTS
 from ..utilities import in_bounds
 
 
 class Knight(Piece):
+    def get_type(self):
+        return KNIGHTS
+
     def calculate_moves(self, board, move_history) -> None:
         up_two_left = (self.row + 2 * self.direction, self.col - 1)
         up_two_right = (self.row + 2 * self.direction, self.col + 1)
