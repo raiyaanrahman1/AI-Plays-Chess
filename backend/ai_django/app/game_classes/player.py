@@ -76,12 +76,12 @@ class Player:
         if board_to is not None:
             temp_opponent.pieces[board_to.get_type()].pop(board_to.id)
 
+        # TODO: move this block into a Player.make_move function
         copied_from.row = to_loc[0]
         copied_from.col = to_loc[1]
         board[from_loc[0]][from_loc[1]] = None
         board[to_loc[0]][to_loc[1]] = board_from
-        # TODO: append move to move_history
-
+        # TODO: append move to move_history and adjust castling rights if needed
         temp_self.calculate_legal_moves(temp_opponent, board, move_history)
         temp_opponent.calculate_legal_moves(temp_self, board, move_history)
 
