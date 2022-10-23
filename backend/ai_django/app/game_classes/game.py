@@ -1,4 +1,5 @@
 from .player import Player
+from .game_logic import Logic
 from .constants import PIECE_TYPES
 from .constants import KING
 PAWNS, KNIGHTS, BISHOPS, ROOKS, QUEENS = PIECE_TYPES
@@ -46,8 +47,12 @@ class Game:
         ]
 
     def calculate_legal_moves(self) -> None:
-        for player in self.players:
-            player.calculate_legal_moves(self.board, self.move_history)
+        Logic.calculate_legal_moves(
+            self.white_player, self.black_player, self.board, self.move_history
+        )
+        Logic.calculate_legal_moves(
+            self.black_player, self.white_player, self.board, self.move_history
+        )
 
     def make_move(self, from_loc, to_loc):
         pass
