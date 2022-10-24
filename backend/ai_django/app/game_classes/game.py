@@ -49,12 +49,10 @@ class Game:
         ]
 
     def calculate_legal_moves(self) -> None:
-        Logic.calculate_legal_moves(
-            self.white_player, self.black_player, self.board, self.move_history
-        )
-        Logic.calculate_legal_moves(
-            self.black_player, self.white_player, self.board, self.move_history
-        )
+        for i in range(2):
+            Logic.calculate_legal_moves(
+                self.players[i], self.players[1-i], self.board, self.move_history
+            )
 
     def make_move(self, from_loc, to_loc):
         player_index = len(self.move_history) % 2
