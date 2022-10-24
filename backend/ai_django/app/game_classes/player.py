@@ -19,21 +19,21 @@ class Player:
         pieces = {}
         base_row = 0 if self.colour == 'white' else 7
         pawn_row = base_row + (base_row == 0) - (base_row != 0)
-        pieces[PAWNS] = [
-            Pawn(x, (pawn_row, x), self.colour) for x in range(8)
-        ]
-        pieces[ROOKS] = [
-            Rook(0, (base_row, 0), self.colour),
-            Rook(1, (base_row, 7), self.colour)
-        ]
-        pieces[KNIGHTS] = [
-            Knight(0, (base_row, 1), self.colour),
-            Knight(1, (base_row, 6), self.colour)
-        ]
-        pieces[BISHOPS] = [
-            Bishop(0, (base_row, 2), self.colour),
-            Bishop(1, (base_row, 5), self.colour)
-        ]
-        pieces[QUEENS] = [Queen(0, (base_row, 3), self.colour)]
+        pieces[PAWNS] = {}
+        for i in range(8):
+            pieces[PAWNS][i] = Pawn(i, (pawn_row, i), self.colour)
+        pieces[ROOKS] = {
+            0: Rook(0, (base_row, 0), self.colour),
+            1: Rook(1, (base_row, 7), self.colour)
+        }
+        pieces[KNIGHTS] = {
+            0: Knight(0, (base_row, 1), self.colour),
+            1: Knight(1, (base_row, 6), self.colour)
+        }
+        pieces[BISHOPS] = {
+            0: Bishop(0, (base_row, 2), self.colour),
+            1: Bishop(1, (base_row, 5), self.colour)
+        }
+        pieces[QUEENS] = {0: Queen(0, (base_row, 3), self.colour)}
         pieces[KING] = King(0, (base_row, 4), self.colour)
         return pieces

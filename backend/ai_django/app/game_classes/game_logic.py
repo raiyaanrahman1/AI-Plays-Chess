@@ -28,7 +28,7 @@ class Logic:
 
         helper(player.pieces[KING])
         for piece_type in PIECE_TYPES:
-            for piece in player.pieces[piece_type]:
+            for piece in player.pieces[piece_type].values():
                 helper(piece)
 
     @staticmethod
@@ -52,8 +52,6 @@ class Logic:
             piece.set_loc(to_loc)
 
             # TODO: if capture, update opponents pieces
-            # TODO: Another issue, we reference pieces by id,
-            # but if we delete the piece from the list, it'll reference the wrong piece
 
             # update move history
             move.move_num = len(move_history)
@@ -165,7 +163,7 @@ class Logic:
         # Number of squares needed using lines is also 35 but that's in the worst case
         # so it could improve performance
         for piece_type in [KNIGHTS, BISHOPS, ROOKS, QUEENS]:
-            for piece in opponent.pieces[piece_type]:
+            for piece in opponent.pieces[piece_type].values():
                 if player.pieces[KING].loc in piece.legal_moves:
                     return True
 
