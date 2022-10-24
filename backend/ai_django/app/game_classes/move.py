@@ -10,3 +10,6 @@ class Move:
 
     def __str__(self) -> str:
         return f'from: {self.from_loc}, to: {self.to_loc}'
+
+    def __repr__(self):
+        return self.__str__()

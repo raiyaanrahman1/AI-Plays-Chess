@@ -8,6 +8,9 @@ class Bishop(Piece):
     def get_type(self):
         return BISHOPS
 
+    def __str__(self) -> str:
+        return '♗' if self.colour == 'white' else '♝'
+
     def calculate_moves_in_direction(self, x_direction, y_direction, board):
         x = self.row
         y = self.col

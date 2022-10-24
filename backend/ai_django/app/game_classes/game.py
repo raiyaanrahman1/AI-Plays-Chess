@@ -1,5 +1,7 @@
+from pprint import pformat
 from .player import Player
 from .game_logic import Logic
+from .move import Move
 from .constants import PIECE_TYPES
 from .constants import KING
 PAWNS, KNIGHTS, BISHOPS, ROOKS, QUEENS = PIECE_TYPES
@@ -55,8 +57,32 @@ class Game:
         )
 
     def make_move(self, from_loc, to_loc):
-        pass
-        # try:
-        #     self.board.make_move(from_loc, to_loc)
-        # except Exception as err:
-        #     print(str(err))
+        player_index = len(self.move_history) % 2
+        Logic.make_move(
+            self.board,
+            self.players[player_index],
+            self.players[1-player_index],
+            self.move_history,
+            Move(from_loc, to_loc, self.board)
+        )
+
+    def get_all_legal_moves(self):
+        legal_moves = {'white': {}, 'black': {}}
+        for player in self.players:
+            for piece_type in PIECE_TYPES:
+                legal_moves[player.colour][piece_type] = []
+                for piece in player.pieces[piece_type]:
+                    legal_moves[player.colour][piece_type].append(piece.legal_moves)
+            legal_moves[player.colour][KING] = player.pieces[KING].legal_moves
+
+        return legal_moves
+
+    def __str__(self) -> str:
+        result = ''
+        for i in range(len(self.board)):
+            for piece in self.board[len(self.board) - i - 1]:
+                result += '|' + (str(piece) if piece is not None else ' ')
+            result += '|\n'
+
+        result += '\nlegal moves:' + pformat(self.get_all_legal_moves())
+        return result

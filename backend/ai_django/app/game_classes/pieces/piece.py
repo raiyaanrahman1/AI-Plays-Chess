@@ -19,5 +19,9 @@ class Piece:
         pass
 
     @abstractmethod
+    def __str__(self) -> str:
+        pass
+
+    @abstractmethod
     def calculate_moves(self, board, move_history) -> None:
         pass

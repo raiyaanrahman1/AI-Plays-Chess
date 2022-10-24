@@ -8,6 +8,9 @@ class Rook(Piece):
     def get_type(self):
         return ROOKS
 
+    def __str__(self) -> str:
+        return '♖' if self.colour == 'white' else '♜'
+
     def calculate_moves_in_direction(self, direction, sign, board):
         x = self.row
         y = self.col

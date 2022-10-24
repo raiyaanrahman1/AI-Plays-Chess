@@ -13,7 +13,9 @@ class King(Piece):
     def get_type(self):
         return KING
 
-    # TODO: finish - figure out check and castling
+    def __str__(self) -> str:
+        return '♔' if self.colour == 'white' else '♚'
+
     def calculate_moves(self, board, move_history) -> None:
         up = (self.row + 1, self.col)
         down = (self.row - 1, self.col)

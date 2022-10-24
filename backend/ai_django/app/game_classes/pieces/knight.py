@@ -8,6 +8,9 @@ class Knight(Piece):
     def get_type(self):
         return KNIGHTS
 
+    def __str__(self) -> str:
+        return '♘' if self.colour == 'white' else '♞'
+
     def calculate_moves(self, board, move_history) -> None:
         up_two_left = (self.row + 2 * self.direction, self.col - 1)
         up_two_right = (self.row + 2 * self.direction, self.col + 1)

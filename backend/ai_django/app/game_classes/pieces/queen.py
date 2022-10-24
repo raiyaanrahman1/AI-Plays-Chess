@@ -8,6 +8,9 @@ class Queen(Piece):
     def get_type(self):
         return QUEENS
 
+    def __str__(self) -> str:
+        return '♕' if self.colour == 'white' else '♛'
+
     def calculate_moves(self, board, move_history) -> None:
         bishop = Bishop(-1, (self.row, self.col), self.colour)
         rook = Rook(-1, (self.row, self.col), self.colour)
