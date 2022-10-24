@@ -114,7 +114,7 @@ class Logic:
             dist = 1
             found_piece = False
             while in_bounds((loc := (king_row + x_dir * dist, king_col + y_dir * dist))):
-                board_loc = board[loc[0]][loc[1]]
+                board_loc = board[loc[1]][loc[0]]
                 if not found_piece and board_loc is not None and board_loc.colour != player.colour:
                     return
                 elif found_piece and board_loc is not None and board_loc.colour == player.colour:
@@ -130,11 +130,17 @@ class Logic:
                 elif found_piece and board_loc is None:
                     valid_moves.append(loc)
                 elif found_piece and board_loc is not None and board_loc.colour != player.colour:
-                    valid_moves.append(loc)
-                    piece.legal_moves = list(filter(
-                        lambda move_loc: move_loc in valid_moves,
-                        piece.legal_moves
-                    ))
+                    piece_type = board_loc.get_type()
+                    if (
+                        piece_type == QUEENS
+                        or ((x_dir == 0 or y_dir == 0) and piece_type == ROOKS)
+                        or (x_dir != 0 and y_dir != 0 and piece_type == BISHOPS)
+                    ):
+                        valid_moves.append(loc)
+                        piece.legal_moves = list(filter(
+                            lambda move_loc: move_loc in valid_moves,
+                            piece.legal_moves
+                        ))
                 dist += 1
 
         for x_dir in (0, 1, -1):
