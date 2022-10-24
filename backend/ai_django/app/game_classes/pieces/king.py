@@ -1,6 +1,7 @@
 from .piece import Piece
 from ..constants import KING
 from ..utilities import in_bounds
+from ..move import Move
 
 
 class King(Piece):
@@ -23,16 +24,16 @@ class King(Piece):
         up_right = (up[0], right[1])
         down_right = (down[0], right[1])
 
-        moves = (
+        move_to_locs = (
             up, down, left, right, up_left, down_left, up_right, down_right
         )
 
-        self.legal_moves = list(
-            filter(
-                lambda move: in_bounds(move) and (
-                    board[move[0]][move[1]] is None or
-                    board[move[0]][move[1]].colour != self.colour
-                ),
-                moves
-            )
-        )
+        for loc in move_to_locs:
+            if (
+                    in_bounds(loc) and
+                    (
+                        board[loc[0]][loc[1]] is None or
+                        board[loc[0]][loc[1]].colour != self.colour
+                    )
+            ):
+                self.legal_moves.append(Move(self.loc, loc, board))

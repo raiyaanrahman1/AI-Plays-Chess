@@ -1,6 +1,7 @@
 from .piece import Piece
 from ..constants import KNIGHTS
 from ..utilities import in_bounds
+from ..move import Move
 
 
 class Knight(Piece):
@@ -17,7 +18,7 @@ class Knight(Piece):
         down_two_left = (self.row - 2 * self.direction, self.col - 1)
         down_two_right = (self.row - 2 * self.direction, self.col + 1)
 
-        moves = (
+        move_to_locs = (
             up_two_left,
             up_two_right,
             left_two_up,
@@ -28,12 +29,12 @@ class Knight(Piece):
             down_two_right
         )
 
-        self.legal_moves = list(
-            filter(
-                lambda move: in_bounds(move) and (
-                    board[move[0]][move[1]] is None
-                    or board[move[0]][move[1]].colour != self.colour
-                ),
-                moves
-            )
-        )
+        for loc in move_to_locs:
+            if (
+                    in_bounds(loc) and
+                    (
+                        board[loc[0]][loc[1]] is None or
+                        board[loc[0]][loc[1]].colour != self.colour
+                    )
+            ):
+                self.legal_moves.append(Move(self.loc, loc, board))

@@ -1,6 +1,7 @@
 from .piece import Piece
 from ..constants import ROOKS
 from ..utilities import in_bounds
+from ..move import Move
 
 
 class Rook(Piece):
@@ -20,11 +21,11 @@ class Rook(Piece):
 
         x, y = move_one_space(x, y)
         while in_bounds((x, y)) and board[x][y] is None:
-            moves.append((x, y))
+            moves.append(Move(self.loc, (x, y), board))
             x, y = move_one_space(x, y)
 
         if in_bounds((x, y)) and board[x][y].colour != self.colour:
-            moves.append((x, y))
+            moves.append(Move(self.loc, (x, y), board))
 
         return moves
 
