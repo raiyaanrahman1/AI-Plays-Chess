@@ -47,8 +47,7 @@ class Logic:
             board[to_loc[0]][to_loc[1]] = piece
 
             # update piece location
-            piece.row = to_loc[0]
-            piece.col = to_loc[1]
+            piece.set_loc(to_loc)
 
             # update move history
             move.move_num = len(move_history)
@@ -72,7 +71,7 @@ class Logic:
         board_to = board[to_loc[0]][to_loc[1]]
         temp_player = deepcopy(player)
         temp_opponent = deepcopy(opponent)
-        board[from_loc[0]][from_loc[1]] = deepcopy(board[from_loc[0]][from_loc[1]])
+        board[from_loc[0]][from_loc[1]] = temp_player.pieces[board_from.get_type()][board_from.id]
         if board_to is not None and board_to.colour == player.colour:
             raise TypeError('Cannot move to your own piece')
         if board_to is not None:
