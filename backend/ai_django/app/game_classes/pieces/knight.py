@@ -32,6 +32,8 @@ class Knight(Piece):
             down_two_right
         )
 
+        self.legal_moves = []
+
         for loc in move_to_locs:
             if (
                     in_bounds(loc) and

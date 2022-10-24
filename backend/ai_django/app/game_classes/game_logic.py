@@ -9,11 +9,13 @@ PAWNS, KNIGHTS, BISHOPS, ROOKS, QUEENS = PIECE_TYPES
 # TODO: make the order of parameters consistent for these methods
 class Logic:
     @staticmethod
-    def calculate_legal_moves(player, opponent, board, move_history):
+    def calculate_legal_moves(player, opponent, board, move_history, check_checks=True):
         in_check = Logic.in_check(board, player, opponent)
 
         def helper(piece):
             piece.calculate_moves(board, move_history)
+            if not check_checks:
+                return
             if in_check:
                 piece.legal_moves = list(filter(
                     lambda move: not Logic.in_check_after_move(
@@ -33,7 +35,7 @@ class Logic:
     # this method is in the Logic class instead of the Move class for flexibility
     # i.e. - you can pass in copied parameters and not have to worry about affecting
     # the originals. See in_check_after_move for an example
-    def make_move(board, player, opponent, move_history, move):
+    def make_move(board, player, opponent, move_history, move, check_checks=True):
         # TODO: error checking and adjust castling rights if needed
 
         # set variables
@@ -49,6 +51,10 @@ class Logic:
             # update piece location
             piece.set_loc(to_loc)
 
+            # TODO: if capture, update opponents pieces
+            # TODO: Another issue, we reference pieces by id,
+            # but if we delete the piece from the list, it'll reference the wrong piece
+
             # update move history
             move.move_num = len(move_history)
             move_history.append(move)
@@ -56,8 +62,8 @@ class Logic:
             pass  # TODO: implement
 
         # update legal moves
-        Logic.calculate_legal_moves(player, opponent, board, move_history)
-        Logic.calculate_legal_moves(opponent, player, board, move_history)
+        Logic.calculate_legal_moves(player, opponent, board, move_history, check_checks)
+        Logic.calculate_legal_moves(opponent, player, board, move_history, check_checks)
 
     # Might want to move this method into Piece to avoid an extra loop when filtering
     # Would have to pass in player
@@ -71,7 +77,9 @@ class Logic:
         board_to = board[to_loc[0]][to_loc[1]]
         temp_player = deepcopy(player)
         temp_opponent = deepcopy(opponent)
-        board[from_loc[0]][from_loc[1]] = temp_player.pieces[board_from.get_type()][board_from.id]
+        piece = temp_player.pieces[board_from.get_type()] if board_from.get_type() == KING \
+            else temp_player.pieces[board_from.get_type()][board_from.id]
+        board[from_loc[0]][from_loc[1]] = piece
         if board_to is not None and board_to.colour == player.colour:
             raise TypeError('Cannot move to your own piece')
         if board_to is not None:
@@ -82,7 +90,8 @@ class Logic:
             temp_player,
             temp_opponent,
             move_history,
-            Move(from_loc, to_loc, board, move.special_move)
+            Move(from_loc, to_loc, board, move.special_move),
+            False
         )
 
         in_check = Logic.in_check(board, player, opponent)

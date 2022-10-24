@@ -30,6 +30,8 @@ class King(Piece):
             up, down, left, right, up_left, down_left, up_right, down_right
         )
 
+        self.legal_moves = []
+
         for loc in move_to_locs:
             if (
                     in_bounds(loc) and

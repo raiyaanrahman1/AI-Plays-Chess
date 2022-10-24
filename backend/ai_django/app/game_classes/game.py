@@ -84,5 +84,7 @@ class Game:
                 result += '|' + (str(piece) if piece is not None else ' ')
             result += '|\n'
 
-        result += '\nlegal moves:' + pformat(self.get_all_legal_moves())
         return result
+
+    def info(self) -> str:
+        return 'legal moves:\n' + pformat(self.get_all_legal_moves())

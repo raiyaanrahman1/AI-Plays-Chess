@@ -13,3 +13,7 @@ class GameTests(TestCase):
         game = Game()
         game.calculate_legal_moves()
         print(game)
+        print(game.info())
+        game.make_move((1, 4), (3, 4))
+        print(game)
+        print(game.info())
