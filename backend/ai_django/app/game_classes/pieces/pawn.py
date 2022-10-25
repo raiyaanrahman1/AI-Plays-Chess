@@ -37,7 +37,6 @@ class Pawn(Piece):
             ):
                 self.legal_moves.append(Move(self.loc, loc, board))
 
-            # TODO: for en-passent, also need to check if the pawn moved 2 spaces, not 1
             if (
                 self.row == starting_row + self.direction * 3
                 and in_bounds(loc)
@@ -45,8 +44,9 @@ class Pawn(Piece):
                 and board[self.row][loc[1]].get_type() == PAWNS
                 and board[self.row][loc[1]].colour != self.colour
                 and len(move_history) > 0
-                and move_history[-1].piece.get_type() == PAWNS
-                and move_history[-1].piece.id == board[self.row][loc[1]].id
+                and move_history[-1].piece_type == PAWNS
+                and move_history[-1].piece_id == board[self.row][loc[1]].id
+                and move_history[-1].from_loc[0] == self.row + 2 * self.direction
             ):
                 symbol = '<-x' if loc == left_diag else 'x->'
                 self.legal_moves.append(Move(self.loc, loc, board, symbol))
