@@ -8,6 +8,9 @@ class Queen(Piece):
     def get_type(self):
         return QUEENS
 
+    def get_name(self) -> str:
+        return 'Queen'
+
     def __str__(self) -> str:
         return '♕' if self.colour == 'white' else '♛'
 

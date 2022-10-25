@@ -8,6 +8,9 @@ class Rook(Piece):
     def get_type(self):
         return ROOKS
 
+    def get_name(self) -> str:
+        return 'Rook'
+
     def __str__(self) -> str:
         return '♖' if self.colour == 'white' else '♜'
 

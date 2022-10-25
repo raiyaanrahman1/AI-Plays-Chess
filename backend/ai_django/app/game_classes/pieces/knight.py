@@ -8,6 +8,9 @@ class Knight(Piece):
     def get_type(self):
         return KNIGHTS
 
+    def get_name(self) -> str:
+        return 'Knight'
+
     def __str__(self) -> str:
         return '♘' if self.colour == 'white' else '♞'
 

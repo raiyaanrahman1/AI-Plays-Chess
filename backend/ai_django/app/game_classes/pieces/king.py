@@ -13,6 +13,9 @@ class King(Piece):
     def get_type(self):
         return KING
 
+    def get_name(self) -> str:
+        return 'King'
+
     def __str__(self) -> str:
         return '♔' if self.colour == 'white' else '♚'
 

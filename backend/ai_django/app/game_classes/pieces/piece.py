@@ -19,6 +19,10 @@ class Piece:
         pass
 
     @abstractmethod
+    def get_name(self) -> str:
+        pass
+
+    @abstractmethod
     def __str__(self) -> str:
         pass
 

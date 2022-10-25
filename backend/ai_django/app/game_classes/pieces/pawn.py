@@ -8,6 +8,9 @@ class Pawn(Piece):
     def get_type(self):
         return PAWNS
 
+    def get_name(self) -> str:
+        return 'Pawn'
+
     def __str__(self) -> str:
         return '♙' if self.colour == 'white' else '♟︎'
 

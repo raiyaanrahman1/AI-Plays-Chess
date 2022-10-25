@@ -8,6 +8,9 @@ class Bishop(Piece):
     def get_type(self):
         return BISHOPS
 
+    def get_name(self) -> str:
+        return 'Bishop'
+
     def __str__(self) -> str:
         return '♗' if self.colour == 'white' else '♝'
 

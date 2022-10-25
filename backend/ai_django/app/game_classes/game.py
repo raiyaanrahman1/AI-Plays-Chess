@@ -54,14 +54,14 @@ class Game:
                 self.players[i], self.players[1-i], self.board, self.move_history
             )
 
-    def make_move(self, from_loc, to_loc):
+    def make_move(self, from_loc, to_loc, special_move=None):
         player_index = len(self.move_history) % 2
         Logic.make_move(
             self.board,
             self.players[player_index],
             self.players[1-player_index],
             self.move_history,
-            Move(from_loc, to_loc, self.board)
+            Move(from_loc, to_loc, self.board, special_move)
         )
 
     def get_all_legal_moves(self):

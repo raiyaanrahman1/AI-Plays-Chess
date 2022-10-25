@@ -1,5 +1,6 @@
 from copy import deepcopy
 from .utilities import in_bounds
+from .game_errors import InvalidStartPosError, InvalidPlayerError, IllegalMoveError
 from .constants import PIECE_TYPES
 from .constants import KING
 from .move import Move
@@ -36,15 +37,28 @@ class Logic:
     # i.e. - you can pass in copied parameters and not have to worry about affecting
     # the originals. See in_check_after_move for an example
     def make_move(board, player, opponent, move_history, move, check_checks=True):
-        # TODO: error checking and adjust castling rights if needed
-
         # set variables
         from_loc = move.from_loc
         to_loc = move.to_loc
+        piece = board[from_loc[0]][from_loc[1]]
+
+        # error checking
+        if piece is None:
+            raise InvalidStartPosError(from_loc)
+        if piece.colour != player.colour:
+            raise InvalidPlayerError(piece.colour)
+        if move not in piece.legal_moves:
+            raise IllegalMoveError(
+                piece.colour, piece.get_name(), move.from_loc, move.to_loc, move.special_move
+            )
+
+        # set castling rights
+        if piece.get_type() == KING:
+            piece.short_castle_rights = False
+            piece.long_castle_rights = False
 
         if (move.special_move is None):
             # update board
-            piece = board[from_loc[0]][from_loc[1]]
             board[from_loc[0]][from_loc[1]] = None
             board[to_loc[0]][to_loc[1]] = piece
 
@@ -164,12 +178,13 @@ class Logic:
         # so it could improve performance
         for piece_type in [KNIGHTS, BISHOPS, ROOKS, QUEENS]:
             for piece in opponent.pieces[piece_type].values():
-                if player.pieces[KING].loc in piece.legal_moves:
+                if Move(piece.loc, player.pieces[KING].loc, board) in piece.legal_moves:
                     return True
 
         # the other King can't actually put the player in check
         # this is simply to prevent the kings from being adjacent
-        if player.pieces[KING].loc in opponent.pieces[KING].legal_moves:
+        if (Move(opponent.pieces[KING].loc, player.pieces[KING].loc, board)
+                in opponent.pieces[KING].legal_moves):
             return True
 
         left_diag = (player.pieces[KING].row + 1 * player.direction, player.pieces[KING].col - 1)
