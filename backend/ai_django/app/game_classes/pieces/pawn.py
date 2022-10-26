@@ -59,7 +59,20 @@ class Pawn(Piece):
                 and board[loc[0]][loc[1]] is not None
                 and board[loc[0]][loc[1]].colour != self.colour
             ):
-                self.legal_moves.append(Move(self.loc, loc, board))
+                if (
+                    (loc[0] == 7 and self.colour == 'white')
+                    or (loc[0] == 0 and self.colour == 'black')
+                ):
+                    self.legal_moves.extend(
+                        [
+                            Move(self.loc, loc, board, PROMOTE_TO_QUEEN),
+                            Move(self.loc, loc, board, PROMOTE_TO_ROOK),
+                            Move(self.loc, loc, board, PROMOTE_TO_BISHOP),
+                            Move(self.loc, loc, board, PROMOTE_TO_KNIGHT)
+                        ]
+                    )
+                else:
+                    self.legal_moves.append(Move(self.loc, loc, board))
 
             if (
                 self.row == starting_row + self.direction * 3

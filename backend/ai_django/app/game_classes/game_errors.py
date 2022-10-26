@@ -58,6 +58,7 @@ class IllegalMoveError(GameError):
                 f'Invalid Move: It is illegal for {player_colour} ',
                 f'to play en-passent with their pawn on {start_loc} to {end_loc}'
             )
+        # TODO: Should I add promotion moves?? Even though it shouldn't be possible
         super().__init__(message_prefix + ''.join(message))
 
 

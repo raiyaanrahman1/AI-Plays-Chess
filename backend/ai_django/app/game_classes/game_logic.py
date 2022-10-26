@@ -8,9 +8,18 @@ from .game_errors import (
     InternalInvalidPlayerError,
     InternalIllegalMoveError
 )
+from .pieces.knight import Knight
+from .pieces.bishop import Bishop
+from .pieces.rook import Rook
+from .pieces.queen import Queen
 from .constants import PIECE_TYPES
 from .constants import KING
-from .constants import SHORT_CASTLE, LONG_CASTLE
+from .constants import (
+    SHORT_CASTLE,
+    LONG_CASTLE,
+    ENPASSANT_LEFT,
+    ENPASSANT_RIGHT,
+)
 from .move import Move
 PAWNS, KNIGHTS, BISHOPS, ROOKS, QUEENS = PIECE_TYPES
 
@@ -78,7 +87,7 @@ class Logic:
             elif piece.id == 1:
                 player.pieces[KING].short_castle_rights = False
 
-        if (move.special_move is None):
+        if move.special_move is None:
             # if capture, update opponents pieces
             if board[to_loc[0]][to_loc[1]] is not None:
                 assert board[to_loc[0]][to_loc[1]].colour != player.colour
@@ -92,11 +101,73 @@ class Logic:
             board[from_loc[0]][from_loc[1]] = None
             board[to_loc[0]][to_loc[1]] = piece
 
-            # update move history
-            move.move_num = len(move_history)
-            move_history.append(move)
-        else:
-            pass  # TODO: implement
+        elif move.special_move == SHORT_CASTLE:
+            piece.set_loc(to_loc)
+            player.pieces[ROOKS][1].set_loc((to_loc[0], to_loc[1] - 1))
+
+            board[from_loc[0]][from_loc[1]] = None
+            board[to_loc[0]][to_loc[1] + 1] = None
+            board[to_loc[0]][to_loc[1]] = piece
+            board[to_loc[0]][to_loc[1] - 1] = player.pieces[ROOKS][1]
+
+        elif move.special_move == LONG_CASTLE:
+            piece.set_loc(to_loc)
+            player.pieces[ROOKS][0].set_loc((to_loc[0], to_loc[1] + 1))
+
+            board[from_loc[0]][from_loc[1]] = None
+            board[to_loc[0]][to_loc[1] - 2] = None
+            board[to_loc[0]][to_loc[1]] = piece
+            board[to_loc[0]][to_loc[1] + 1] = player.pieces[ROOKS][0]
+
+        elif move.special_move == ENPASSANT_LEFT:
+            captured_piece = board[from_loc[0]][from_loc[1] - 1]
+            del opponent.pieces[PAWNS][captured_piece.id]
+
+            piece.set_loc(to_loc)
+
+            # update board
+            board[from_loc[0]][from_loc[1]] = None
+            board[to_loc[0]][to_loc[1]] = piece
+
+        elif move.special_move == ENPASSANT_RIGHT:
+            captured_piece = board[from_loc[0]][from_loc[1] + 1]
+            del opponent.pieces[PAWNS][captured_piece.id]
+
+            piece.set_loc(to_loc)
+
+            # update board
+            board[from_loc[0]][from_loc[1]] = None
+            board[to_loc[0]][to_loc[1]] = piece
+
+        elif move.special_move.startswith('promote'):
+            # if capture, update opponents pieces
+            if board[to_loc[0]][to_loc[1]] is not None:
+                assert board[to_loc[0]][to_loc[1]].colour != player.colour
+                captured_piece = board[to_loc[0]][to_loc[1]]
+                del opponent.pieces[captured_piece.get_type()][captured_piece.id]
+
+            # delete pawn
+            del player.pieces[PAWNS][piece.id]
+
+            promotion_piece = move.special_move.split(':')[1]
+            piece_type_to_class = {
+                QUEENS: Queen,
+                ROOKS: Rook,
+                BISHOPS: Bishop,
+                KNIGHTS: Knight
+            }
+            piece_class = piece_type_to_class[promotion_piece]
+            piece_id = len(player.pieces[promotion_piece])
+            new_piece = piece_class(piece_id, to_loc, player.colour)
+            player.pieces[promotion_piece][piece_id] = new_piece
+
+            # update board
+            board[from_loc[0]][from_loc[1]] = None
+            board[to_loc[0]][to_loc[1]] = new_piece
+
+        # update move history
+        move.move_num = len(move_history)
+        move_history.append(move)
 
         # update legal moves
         Logic.calculate_legal_moves(player, opponent, board, move_history, check_checks)
