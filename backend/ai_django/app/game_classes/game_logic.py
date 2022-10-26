@@ -19,8 +19,12 @@ class Logic:
                 return
             if in_check:
                 piece.legal_moves = list(filter(
-                    lambda move: not Logic.in_check_after_move(
-                        board, move_history, player, opponent, move
+                    lambda move: (
+                        move.special_move != 'O-O'  # Can't castle when in check
+                        and move.special_move != 'O-O-O'  # Can't castle when in check
+                        and not Logic.in_check_after_move(
+                            board, move_history, player, opponent, move
+                        )
                     ),
                     piece.legal_moves
                 ))
@@ -64,18 +68,18 @@ class Logic:
                 player.pieces[KING].short_castle_rights = False
 
         if (move.special_move is None):
-            # update board
-            board[from_loc[0]][from_loc[1]] = None
-            board[to_loc[0]][to_loc[1]] = piece
-
-            # update piece location
-            piece.set_loc(to_loc)
-
             # if capture, update opponents pieces
             if board[to_loc[0]][to_loc[1]] is not None:
                 assert board[to_loc[0]][to_loc[1]].colour != player.colour
                 captured_piece = board[to_loc[0]][to_loc[1]]
                 del opponent.pieces[captured_piece.get_type()][captured_piece.id]
+
+            # update piece location
+            piece.set_loc(to_loc)
+
+            # update board
+            board[from_loc[0]][from_loc[1]] = None
+            board[to_loc[0]][to_loc[1]] = piece
 
             # update move history
             move.move_num = len(move_history)
@@ -103,7 +107,7 @@ class Logic:
             else temp_player.pieces[board_from.get_type()][board_from.id]
         board[from_loc[0]][from_loc[1]] = piece
         if board_to is not None and board_to.colour == player.colour:
-            raise TypeError('Cannot move to your own piece')
+            raise TypeError('Cannot move to your own piece')  # TODO: Change to a new game error
         if board_to is not None:
             temp_opponent.pieces[board_to.get_type()].pop(board_to.id)
 
@@ -129,14 +133,32 @@ class Logic:
     @staticmethod
     def validate_moves(board, move_history, piece, player, opponent):
         if piece.get_type() == KING:
-            player.pieces[KING].legal_moves = list(filter(
-                lambda move: not Logic.in_check_after_move(
-                    board, move_history, player, opponent, move
-                ),
-                player.pieces[KING].legal_moves
-            ))
+            legal_moves = []
+            for move in piece.legal_moves:
+                moves_to_check = []
+                if move.special_move == 'O-O':
+                    moves_to_check.append(Move(piece.loc, (piece.loc[0], piece.loc[1] + 1), board))
+                    moves_to_check.append(
+                        Move(piece.loc, (piece.loc[0], piece.loc[1] + 2), board, 'O-O')
+                    )
+                elif move.special_move == 'O-O-O':
+                    moves_to_check.append(Move(piece.loc, (piece.loc[0], piece.loc[1] - 1), board))
+                    moves_to_check.append(
+                        Move(piece.loc, (piece.loc[0], piece.loc[1] - 2), board, 'O-O-O')
+                    )
+                else:
+                    moves_to_check.append(move)
+                i = 0
+                moves_are_legal = True
+                while (i < len(moves_to_check) and moves_are_legal):
+                    moves_are_legal = not Logic.in_check_after_move(
+                        board, move_history, player, opponent, moves_to_check[i]
+                    )
+                    i += 1
+                if moves_are_legal:
+                    legal_moves.append(move)
 
-            # TODO: implement special case for castling
+            player.pieces[KING].legal_moves = legal_moves
             return
 
         king_row, king_col = player.pieces[KING].loc
