@@ -1,6 +1,13 @@
 from copy import deepcopy
 from .utilities import in_bounds
-from .game_errors import InvalidStartPosError, InvalidPlayerError, IllegalMoveError
+from .game_errors import (
+    InvalidStartPosError,
+    InvalidPlayerError,
+    IllegalMoveError,
+    InternalInvalidStartPosError,
+    InternalInvalidPlayerError,
+    InternalIllegalMoveError
+)
 from .constants import PIECE_TYPES
 from .constants import KING
 from .constants import SHORT_CASTLE, LONG_CASTLE
@@ -49,12 +56,14 @@ class Logic:
 
         # error checking
         if piece is None:
-            raise InvalidStartPosError(from_loc)
+            error = InvalidStartPosError if check_checks else InternalInvalidStartPosError
+            raise error(from_loc)
         if piece.colour != player.colour:
-            raise InvalidPlayerError(piece.colour)
+            error = InvalidPlayerError if check_checks else InternalInvalidPlayerError
+            raise error(piece.colour)
         if move not in piece.legal_moves:
-            # TODO: Use (InternalIllegalMoveError) if check_checks == False
-            raise IllegalMoveError(
+            error = IllegalMoveError if check_checks else InternalIllegalMoveError
+            raise error(
                 piece.colour, piece.get_name(), move.from_loc, move.to_loc, move.special_move
             )
 
@@ -109,8 +118,9 @@ class Logic:
             else temp_player.pieces[board_from.get_type()][board_from.id]
         board[from_loc[0]][from_loc[1]] = piece
         if board_to is not None and board_to.colour == player.colour:
-            # TODO: Change to a new game error (InternalIllegalMoveError)
-            raise TypeError('Cannot move to your own piece')
+            raise InternalIllegalMoveError(
+                player.colour, board_from.get_name(), from_loc, to_loc, move.special_move
+            )
         if board_to is not None:
             temp_opponent.pieces[board_to.get_type()].pop(board_to.id)
 

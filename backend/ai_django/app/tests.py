@@ -25,16 +25,21 @@ class GameTests(TestCase):
         )
         print(coloured(150, 0, 255, 'Running test_game_errors'))
         game = Game()
-        with self.assertRaises(InvalidStartPosError):
+        with self.assertRaises(InvalidStartPosError) as context:
             game.make_move((3, 4), (4, 4))
-        with self.assertRaises(InvalidPlayerError):
+        self.print(context.exception)
+        with self.assertRaises(InvalidPlayerError) as context:
             game.make_move((7, 0), (6, 0))
-        with self.assertRaises(IllegalMoveError):
+        self.print(context.exception)
+        with self.assertRaises(IllegalMoveError) as context:
             game.make_move((1, 4), (1, 4))
-        with self.assertRaises(IllegalMoveError):
+        self.print(context.exception)
+        with self.assertRaises(IllegalMoveError) as context:
             game.make_move((1, 4), (2, 5))
-        with self.assertRaises(IllegalMoveError):
+        self.print(context.exception)
+        with self.assertRaises(IllegalMoveError) as context:
             game.make_move((0, 4), (1, 4))
+        self.print(context.exception)
 
     def test_game(self):
         from .game_classes.game import Game
