@@ -1,4 +1,5 @@
 from .utilities import loc_to_chess_notation
+from .constants import SHORT_CASTLE, LONG_CASTLE, ENPASSANT_LEFT, ENPASSANT_RIGHT
 
 
 class GameError(Exception):
@@ -28,17 +29,17 @@ class IllegalMoveError(GameError):
                 f'Invalid Move: It is illegal to move {player_colour}\'s ',
                 f'{piece_name} from {start_loc} to {end_loc}'
             )
-        elif special_move == 'O-O':
+        elif special_move == SHORT_CASTLE:
             message = (
                 f'Invalid Move: It is illegal for {player_colour}\'s ',
                 'king to short castle'
             )
-        elif special_move == 'O-O-O':
+        elif special_move == LONG_CASTLE:
             message = (
                 f'Invalid Move: It is illegal for {player_colour}\'s ',
                 'king to long castle'
             )
-        elif special_move == '<-x' or special_move == 'x->':
+        elif special_move == ENPASSANT_LEFT or special_move == ENPASSANT_RIGHT:
             message = (
                 f'Invalid Move: It is illegal for {player_colour} ',
                 f'to play en-passent with their pawn on {start_loc} to {end_loc}'

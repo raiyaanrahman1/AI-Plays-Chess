@@ -3,6 +3,7 @@ from .utilities import in_bounds
 from .game_errors import InvalidStartPosError, InvalidPlayerError, IllegalMoveError
 from .constants import PIECE_TYPES
 from .constants import KING
+from .constants import SHORT_CASTLE, LONG_CASTLE
 from .move import Move
 PAWNS, KNIGHTS, BISHOPS, ROOKS, QUEENS = PIECE_TYPES
 
@@ -20,8 +21,8 @@ class Logic:
             if in_check:
                 piece.legal_moves = list(filter(
                     lambda move: (
-                        move.special_move != 'O-O'  # Can't castle when in check
-                        and move.special_move != 'O-O-O'  # Can't castle when in check
+                        move.special_move != SHORT_CASTLE  # Can't castle when in check
+                        and move.special_move != LONG_CASTLE  # Can't castle when in check
                         and not Logic.in_check_after_move(
                             board, move_history, player, opponent, move
                         )
@@ -52,6 +53,7 @@ class Logic:
         if piece.colour != player.colour:
             raise InvalidPlayerError(piece.colour)
         if move not in piece.legal_moves:
+            # TODO: Use (InternalIllegalMoveError) if check_checks == False
             raise IllegalMoveError(
                 piece.colour, piece.get_name(), move.from_loc, move.to_loc, move.special_move
             )
@@ -107,7 +109,8 @@ class Logic:
             else temp_player.pieces[board_from.get_type()][board_from.id]
         board[from_loc[0]][from_loc[1]] = piece
         if board_to is not None and board_to.colour == player.colour:
-            raise TypeError('Cannot move to your own piece')  # TODO: Change to a new game error
+            # TODO: Change to a new game error (InternalIllegalMoveError)
+            raise TypeError('Cannot move to your own piece')
         if board_to is not None:
             temp_opponent.pieces[board_to.get_type()].pop(board_to.id)
 
@@ -136,15 +139,15 @@ class Logic:
             legal_moves = []
             for move in piece.legal_moves:
                 moves_to_check = []
-                if move.special_move == 'O-O':
+                if move.special_move == SHORT_CASTLE:
                     moves_to_check.append(Move(piece.loc, (piece.loc[0], piece.loc[1] + 1), board))
                     moves_to_check.append(
-                        Move(piece.loc, (piece.loc[0], piece.loc[1] + 2), board, 'O-O')
+                        Move(piece.loc, (piece.loc[0], piece.loc[1] + 2), board, SHORT_CASTLE)
                     )
-                elif move.special_move == 'O-O-O':
+                elif move.special_move == LONG_CASTLE:
                     moves_to_check.append(Move(piece.loc, (piece.loc[0], piece.loc[1] - 1), board))
                     moves_to_check.append(
-                        Move(piece.loc, (piece.loc[0], piece.loc[1] - 2), board, 'O-O-O')
+                        Move(piece.loc, (piece.loc[0], piece.loc[1] - 2), board, LONG_CASTLE)
                     )
                 else:
                     moves_to_check.append(move)

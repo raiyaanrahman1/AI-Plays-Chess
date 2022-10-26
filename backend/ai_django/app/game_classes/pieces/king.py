@@ -1,5 +1,6 @@
 from .piece import Piece
 from ..constants import KING
+from ..constants import SHORT_CASTLE, LONG_CASTLE
 from ..utilities import in_bounds
 from ..move import Move
 
@@ -55,11 +56,11 @@ class King(Piece):
             and board[right[0]][right[1]] is None
             and board[two_right[0]][two_right[1]] is None
         ):
-            self.legal_moves.append(Move(self.loc, two_right, board, 'O-O'))
+            self.legal_moves.append(Move(self.loc, two_right, board, SHORT_CASTLE))
         if (
             self.long_castle_rights
             and board[left[0]][left[1]] is None
             and board[two_left[0]][two_left[1]] is None
             and board[three_left[0]][three_left[1]] is None
         ):
-            self.legal_moves.append(Move(self.loc, two_left, board, 'O-O-O'))
+            self.legal_moves.append(Move(self.loc, two_left, board, LONG_CASTLE))

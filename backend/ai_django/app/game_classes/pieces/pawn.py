@@ -1,5 +1,6 @@
 from .piece import Piece
 from ..constants import PAWNS
+from ..constants import ENPASSANT_LEFT, ENPASSANT_RIGHT
 from ..utilities import in_bounds
 from ..move import Move
 
@@ -51,5 +52,5 @@ class Pawn(Piece):
                 and move_history[-1].piece_id == board[self.row][loc[1]].id
                 and move_history[-1].from_loc[0] == self.row + 2 * self.direction
             ):
-                symbol = '<-x' if loc == left_diag else 'x->'
+                symbol = ENPASSANT_LEFT if loc == left_diag else ENPASSANT_RIGHT
                 self.legal_moves.append(Move(self.loc, loc, board, symbol))
