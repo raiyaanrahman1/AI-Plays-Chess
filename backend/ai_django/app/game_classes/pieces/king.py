@@ -35,6 +35,7 @@ class King(Piece):
 
         self.legal_moves = []
 
+        # Regular Moves
         for loc in move_to_locs:
             if (
                     in_bounds(loc) and
@@ -44,3 +45,21 @@ class King(Piece):
                     )
             ):
                 self.legal_moves.append(Move(self.loc, loc, board))
+
+        # Castling
+        two_left = (self.row, self.col - 2)
+        three_left = (self.row, self.col - 3)
+        two_right = (self.row, self.col + 2)
+        if (
+            self.short_castle_rights
+            and board[right[0]][right[1]] is None
+            and board[two_right[0]][two_right[1]] is None
+        ):
+            self.legal_moves.append(Move(self.loc, two_right, board, 'O-O'))
+        if (
+            self.long_castle_rights
+            and board[left[0]][left[1]] is None
+            and board[two_left[0]][two_left[1]] is None
+            and board[three_left[0]][three_left[1]] is None
+        ):
+            self.legal_moves.append(Move(self.loc, two_left, board, 'O-O-O'))

@@ -57,6 +57,12 @@ class Logic:
             piece.short_castle_rights = False
             piece.long_castle_rights = False
 
+        if piece.get_type() == ROOKS:
+            if piece.id == 0:
+                player.pieces[KING].long_castle_rights = False
+            elif piece.id == 1:
+                player.pieces[KING].short_castle_rights = False
+
         if (move.special_move is None):
             # update board
             board[from_loc[0]][from_loc[1]] = None
@@ -65,7 +71,11 @@ class Logic:
             # update piece location
             piece.set_loc(to_loc)
 
-            # TODO: if capture, update opponents pieces
+            # if capture, update opponents pieces
+            if board[to_loc[0]][to_loc[1]] is not None:
+                assert board[to_loc[0]][to_loc[1]].colour != player.colour
+                captured_piece = board[to_loc[0]][to_loc[1]]
+                del opponent.pieces[captured_piece.get_type()][captured_piece.id]
 
             # update move history
             move.move_num = len(move_history)
