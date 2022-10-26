@@ -1,6 +1,13 @@
 from .piece import Piece
 from ..constants import PAWNS
-from ..constants import ENPASSANT_LEFT, ENPASSANT_RIGHT
+from ..constants import (
+    ENPASSANT_LEFT,
+    ENPASSANT_RIGHT,
+    PROMOTE_TO_QUEEN,
+    PROMOTE_TO_ROOK,
+    PROMOTE_TO_BISHOP,
+    PROMOTE_TO_KNIGHT
+)
 from ..utilities import in_bounds
 from ..move import Move
 
@@ -26,7 +33,20 @@ class Pawn(Piece):
         right_diag = (self.row + 1 * self.direction, self.col + 1)
 
         if in_bounds(one_up) and board[one_up[0]][one_up[1]] is None:
-            self.legal_moves.append(Move(self.loc, one_up, board))
+            if (
+                (one_up[0] == 7 and self.colour == 'white')
+                or (one_up[0] == 0 and self.colour == 'black')
+            ):
+                self.legal_moves.extend(
+                    [
+                        Move(self.loc, one_up, board, PROMOTE_TO_QUEEN),
+                        Move(self.loc, one_up, board, PROMOTE_TO_ROOK),
+                        Move(self.loc, one_up, board, PROMOTE_TO_BISHOP),
+                        Move(self.loc, one_up, board, PROMOTE_TO_KNIGHT)
+                    ]
+                )
+            else:
+                self.legal_moves.append(Move(self.loc, one_up, board))
 
         if (self.row == starting_row
                 and in_bounds(two_up)
