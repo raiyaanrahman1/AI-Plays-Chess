@@ -1,6 +1,7 @@
 from pprint import pformat
 from .player import Player
 from .game_logic import Logic
+from .utilities import get_board_string
 from .move import Move
 from .constants import PIECE_TYPES
 from .constants import KING
@@ -76,16 +77,10 @@ class Game:
         return legal_moves
 
     def __str__(self) -> str:
-        result = ''
-        for i in range(len(self.board)):
-            for piece in self.board[len(self.board) - i - 1]:
-                result += '|' + (str(piece) if piece is not None else ' ')
-            result += '|\n'
-
-        return result
+        return get_board_string(self.board)
 
     def info(self) -> str:
         return 'legal moves:\n' + pformat(self.get_all_legal_moves()) \
-            + '\nmove history: ' + str(self.move_history)
+            + '\nmove history:\n' + pformat(self.move_history)
 
-    # TODO: implement move history with proper move names and material
+    # TODO: test move names and implement material

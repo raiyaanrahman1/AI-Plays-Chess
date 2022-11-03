@@ -18,3 +18,13 @@ def index_to_letter(index):
 
 def loc_to_chess_notation(loc):
     return f'{index_to_letter(loc[1])}{loc[0] + 1}'
+
+
+def get_board_string(board) -> str:
+    result = ''
+    for i in range(len(board)):
+        for piece in board[len(board) - i - 1]:
+            result += '|' + (str(piece) if piece is not None else ' ')
+        result += '|\n'
+
+    return result
