@@ -85,4 +85,7 @@ class Game:
         return result
 
     def info(self) -> str:
-        return 'legal moves:\n' + pformat(self.get_all_legal_moves())
+        return 'legal moves:\n' + pformat(self.get_all_legal_moves()) \
+            + '\nmove history: ' + str(self.move_history)
+
+    # TODO: implement move history with proper move names and material

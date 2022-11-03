@@ -14,6 +14,7 @@ class Player:
         self.colour = colour
         self.direction = 1 if self.colour == 'white' else -1
         self.pieces = self.setup_pieces()
+        self.num_legal_moves = 0
 
     def setup_pieces(self) -> None:
         pieces = {}

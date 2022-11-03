@@ -1,9 +1,9 @@
-PAWNS = 'p'
-KNIGHTS = 'n'
-BISHOPS = 'b'
-ROOKS = 'r'
-QUEENS = 'q'
-KING = 'k'
+PAWNS = 'P'
+KNIGHTS = 'N'
+BISHOPS = 'B'
+ROOKS = 'R'
+QUEENS = 'Q'
+KING = 'K'
 
 PIECE_TYPES = (
     PAWNS,

@@ -6,6 +6,7 @@ class Move:
         self.from_loc = from_loc
         self.to_loc = to_loc
         self.special_move = special_move
+        self.move_name = None
         self.move_num = -1  # index of move history - set in Logic.make_move()
 
         if board_before_move[from_loc[0]][from_loc[1]] is None:
@@ -19,6 +20,8 @@ class Move:
         self.colour = board_before_move[from_loc[0]][from_loc[1]].colour
 
     def __str__(self) -> str:
+        if self.move_name is not None:
+            return self.move_name
         if self.special_move is not None:
             return self.special_move
         from_loc_chess_not = loc_to_chess_notation(self.from_loc)

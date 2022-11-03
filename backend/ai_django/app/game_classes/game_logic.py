@@ -1,5 +1,5 @@
 from copy import deepcopy
-from .utilities import in_bounds
+from .utilities import in_bounds, index_to_letter, loc_to_chess_notation
 from .game_errors import (
     InvalidStartPosError,
     InvalidPlayerError,
@@ -29,6 +29,7 @@ class Logic:
     @staticmethod
     def calculate_legal_moves(player, opponent, board, move_history, check_checks=True):
         in_check = Logic.in_check(board, player, opponent)
+        player.num_legal_moves = 0
 
         def helper(piece):
             piece.calculate_moves(board, move_history)
@@ -47,11 +48,14 @@ class Logic:
                 ))
             else:
                 Logic.validate_moves(board, move_history, piece, player, opponent)
+            player.num_legal_moves += len(piece.legal_moves)
 
         helper(player.pieces[KING])
         for piece_type in PIECE_TYPES:
             for piece in player.pieces[piece_type].values():
                 helper(piece)
+
+        return in_check
 
     @staticmethod
     # this method is in the Logic class instead of the Move class for flexibility
@@ -62,6 +66,7 @@ class Logic:
         from_loc = move.from_loc
         to_loc = move.to_loc
         piece = board[from_loc[0]][from_loc[1]]
+        capture = False
 
         # error checking
         if piece is None:
@@ -93,6 +98,7 @@ class Logic:
                 assert board[to_loc[0]][to_loc[1]].colour != player.colour
                 captured_piece = board[to_loc[0]][to_loc[1]]
                 del opponent.pieces[captured_piece.get_type()][captured_piece.id]
+                capture = True
 
             # update piece location
             piece.set_loc(to_loc)
@@ -129,6 +135,8 @@ class Logic:
             board[from_loc[0]][from_loc[1]] = None
             board[to_loc[0]][to_loc[1]] = piece
 
+            capture = True
+
         elif move.special_move == ENPASSANT_RIGHT:
             captured_piece = board[from_loc[0]][from_loc[1] + 1]
             del opponent.pieces[PAWNS][captured_piece.id]
@@ -139,12 +147,15 @@ class Logic:
             board[from_loc[0]][from_loc[1]] = None
             board[to_loc[0]][to_loc[1]] = piece
 
+            capture = True
+
         elif move.special_move.startswith('promote'):
             # if capture, update opponents pieces
             if board[to_loc[0]][to_loc[1]] is not None:
                 assert board[to_loc[0]][to_loc[1]].colour != player.colour
                 captured_piece = board[to_loc[0]][to_loc[1]]
                 del opponent.pieces[captured_piece.get_type()][captured_piece.id]
+                capture = True
 
             # delete pawn
             del player.pieces[PAWNS][piece.id]
@@ -171,7 +182,75 @@ class Logic:
 
         # update legal moves
         Logic.calculate_legal_moves(player, opponent, board, move_history, check_checks)
-        Logic.calculate_legal_moves(opponent, player, board, move_history, check_checks)
+        opponent_in_check = Logic.calculate_legal_moves(
+            opponent, player, board, move_history, check_checks
+        )
+
+        game_status = {'game_finished': False}
+
+        move_name_suffix = '+' if opponent_in_check else ''
+        # check for checkmate
+        if opponent_in_check and opponent.num_legal_moves == 0:
+            game_status['game_finished'] = True
+            game_status['game_result'] = 'checkmate'
+            game_status['winner'] = player.colour
+            game_status['game_result_message'] = f'{player.colour} won by checkmate'
+            move_name_suffix = '#'
+
+        # check for stalemate
+        elif opponent.num_legal_moves == 0:
+            game_status['game_finished'] = True
+            game_status['game_result'] = 'draw'
+            game_status['draw_by'] = 'stalemate'
+            game_status['game_result_message'] = 'stalemate'
+
+        elif Logic.is_draw():
+            game_status['game_finished'] = True
+            game_status['game_result'] = 'draw'
+            # TODO: implement
+            game_status['draw_by'] = 'not implemented'
+            game_status['game_result_message'] = 'not implemented'
+
+        move.move_name = Logic.get_move_name(move, capture, move_name_suffix, player.pieces)
+        return game_status
+
+    @staticmethod
+    def get_move_name(move, capture, suffix, player_pieces) -> str:
+        piece_type = move.piece_type
+
+        extra_potential_from_locs = []
+        if piece_type in (KNIGHTS, BISHOPS, ROOKS, QUEENS):
+            for piece in player_pieces[piece_type]:
+                if (
+                    piece.id != move.piece_id
+                    and any(other_move.to_loc == move.to_loc for other_move in piece.legal_moves)
+                ):
+                    extra_potential_from_locs.append(piece.loc)
+        same_file_exists = False
+        same_rank_exists = False
+        for loc in extra_potential_from_locs:
+            if loc[0] == move.from_loc[0]:
+                same_rank_exists = True
+            if loc[1] == move.from_loc[1]:
+                same_file_exists = True
+
+        include_from_loc = ''
+        if len(extra_potential_from_locs) > 0 and not same_file_exists and not same_rank_exists:
+            include_from_loc += index_to_letter(move.from_loc[1])
+        if same_rank_exists:
+            include_from_loc += index_to_letter(move.from_loc[1])
+        if same_file_exists:
+            include_from_loc += move.from_loc[0] + 1
+
+        include_piece = '' if piece_type == PAWNS else piece_type
+        include_capture = 'x' if capture else ''
+        to_loc_chess_not = loc_to_chess_notation(move.to_loc)
+        return f'{include_piece}{include_from_loc}{include_capture}{to_loc_chess_not}{suffix}'
+
+    # TODO: need to check 3-fold repetition, 50 move rule, insufficient mating material
+    @staticmethod
+    def is_draw():
+        return False
 
     # Might want to move this method into Piece to avoid an extra loop when filtering
     # Would have to pass in player
