@@ -71,7 +71,12 @@ class Game:
         )
 
     def get_all_legal_moves(self):
-        legal_moves = {'white': {}, 'black': {}}
+        legal_moves = {
+            'white': {},
+            'black': {},
+            'white_num_legal_moves': self.white_player.num_legal_moves,
+            'black_num_legal_moves': self.black_player.num_legal_moves
+        }
         for player in self.players:
             for piece_type in PIECE_TYPES:
                 legal_moves[player.colour][piece_type] = []
