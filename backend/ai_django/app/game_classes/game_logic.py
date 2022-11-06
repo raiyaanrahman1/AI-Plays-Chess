@@ -27,7 +27,7 @@ PAWNS, KNIGHTS, BISHOPS, ROOKS, QUEENS = PIECE_TYPES
 # TODO: make the order of parameters consistent for these methods
 class Logic:
     @staticmethod
-    def calculate_legal_moves(player, opponent, board, move_history, check_checks=True):
+    def calculate_legal_moves(player, opponent, board, move_history, material, check_checks=True):
         in_check = Logic.in_check(board, player, opponent)
         player.num_legal_moves = 0
 
@@ -41,13 +41,13 @@ class Logic:
                         move.special_move != SHORT_CASTLE  # Can't castle when in check
                         and move.special_move != LONG_CASTLE  # Can't castle when in check
                         and not Logic.in_check_after_move(
-                            board, move_history, player, opponent, move
+                            board, move_history, material, player, opponent, move
                         )
                     ),
                     piece.legal_moves
                 ))
             else:
-                Logic.validate_moves(board, move_history, piece, player, opponent)
+                Logic.validate_moves(board, move_history, material, piece, player, opponent)
             player.num_legal_moves += len(piece.legal_moves)
 
         helper(player.pieces[KING])
@@ -61,12 +61,13 @@ class Logic:
     # this method is in the Logic class instead of the Move class for flexibility
     # i.e. - you can pass in copied parameters and not have to worry about affecting
     # the originals. See in_check_after_move for an example
-    def make_move(board, player, opponent, move_history, move, check_checks=True):
+    def make_move(board, player, opponent, move_history, material, move, check_checks=True):
         # set variables
         from_loc = move.from_loc
         to_loc = move.to_loc
         piece = board[from_loc[0]][from_loc[1]]
-        capture = False
+        captured_piece = None
+        promotion_piece = None
 
         # error checking
         if piece is None:
@@ -98,7 +99,6 @@ class Logic:
                 assert board[to_loc[0]][to_loc[1]].colour != player.colour
                 captured_piece = board[to_loc[0]][to_loc[1]]
                 del opponent.pieces[captured_piece.get_type()][captured_piece.id]
-                capture = True
 
             # update piece location
             piece.set_loc(to_loc)
@@ -135,8 +135,6 @@ class Logic:
             board[from_loc[0]][from_loc[1]] = None
             board[to_loc[0]][to_loc[1]] = piece
 
-            capture = True
-
         elif move.special_move == ENPASSANT_RIGHT:
             captured_piece = board[from_loc[0]][from_loc[1] + 1]
             del opponent.pieces[PAWNS][captured_piece.id]
@@ -147,15 +145,12 @@ class Logic:
             board[from_loc[0]][from_loc[1]] = None
             board[to_loc[0]][to_loc[1]] = piece
 
-            capture = True
-
         elif move.special_move.startswith('promote'):
             # if capture, update opponents pieces
             if board[to_loc[0]][to_loc[1]] is not None:
                 assert board[to_loc[0]][to_loc[1]].colour != player.colour
                 captured_piece = board[to_loc[0]][to_loc[1]]
                 del opponent.pieces[captured_piece.get_type()][captured_piece.id]
-                capture = True
 
             # delete pawn
             del player.pieces[PAWNS][piece.id]
@@ -180,10 +175,18 @@ class Logic:
         move.move_num = len(move_history)
         move_history.append(move)
 
+        # update material
+        is_capture = captured_piece is not None
+        if is_capture and captured_piece.get_type() != KING:
+            material[player.colour][captured_piece.get_type()] += 1
+        if promotion_piece is not None:
+            material[player.colour][promotion_piece.get_type()] += 1
+            material[opponent.colour][PAWNS] += 1
+
         # update legal moves
-        Logic.calculate_legal_moves(player, opponent, board, move_history, check_checks)
+        Logic.calculate_legal_moves(player, opponent, board, move_history, material, check_checks)
         opponent_in_check = Logic.calculate_legal_moves(
-            opponent, player, board, move_history, check_checks
+            opponent, player, board, move_history, material, check_checks
         )
 
         game_status = {'game_finished': False}
@@ -211,11 +214,11 @@ class Logic:
             game_status['draw_by'] = 'not implemented'
             game_status['game_result_message'] = 'not implemented'
 
-        move.move_name = Logic.get_move_name(move, capture, move_name_suffix, player.pieces)
+        move.move_name = Logic.get_move_name(move, is_capture, move_name_suffix, player.pieces)
         return game_status
 
     @staticmethod
-    def get_move_name(move, capture, suffix, player_pieces) -> str:
+    def get_move_name(move, is_capture, suffix, player_pieces) -> str:
         piece_type = move.piece_type
 
         extra_potential_from_locs = []
@@ -243,7 +246,7 @@ class Logic:
             include_from_loc += move.from_loc[0] + 1
 
         include_piece = '' if piece_type == PAWNS else piece_type
-        include_capture = 'x' if capture else ''
+        include_capture = 'x' if is_capture else ''
         to_loc_chess_not = loc_to_chess_notation(move.to_loc)
         return f'{include_piece}{include_from_loc}{include_capture}{to_loc_chess_not}{suffix}'
 
@@ -255,7 +258,7 @@ class Logic:
     # Might want to move this method into Piece to avoid an extra loop when filtering
     # Would have to pass in player
     @staticmethod
-    def in_check_after_move(board, move_history, player, opponent, move) -> bool:
+    def in_check_after_move(board, move_history, material, player, opponent, move) -> bool:
         # to avoid deep-copying the board, we can make the changes on the board itself
         # and then reverse the changes
         from_loc = move.from_loc
@@ -279,6 +282,7 @@ class Logic:
             temp_player,
             temp_opponent,
             move_history,
+            material,
             Move(from_loc, to_loc, board, move.special_move),
             False
         )
@@ -294,7 +298,7 @@ class Logic:
     # filters the pieces moves such that after the move is made, the player's king is not in check
     # pre-condition: the king is not currently in check
     @staticmethod
-    def validate_moves(board, move_history, piece, player, opponent):
+    def validate_moves(board, move_history, material, piece, player, opponent):
         if piece.get_type() == KING:
             legal_moves = []
             for move in piece.legal_moves:
@@ -315,7 +319,7 @@ class Logic:
                 moves_are_legal = True
                 while (i < len(moves_to_check) and moves_are_legal):
                     moves_are_legal = not Logic.in_check_after_move(
-                        board, move_history, player, opponent, moves_to_check[i]
+                        board, move_history, material, player, opponent, moves_to_check[i]
                     )
                     i += 1
                 if moves_are_legal:

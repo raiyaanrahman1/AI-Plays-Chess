@@ -17,6 +17,10 @@ class Game:
         self.players = (self.white_player, self.black_player)
         self.player_pieces = (self.white_player.pieces, self.black_player.pieces)
         self.move_history = []
+        self.material = {
+            'white': {PAWNS: 0, KNIGHTS: 0, BISHOPS: 0, ROOKS: 0, QUEENS: 0},
+            'black': {PAWNS: 0, KNIGHTS: 0, BISHOPS: 0, ROOKS: 0, QUEENS: 0},
+        }
         self.board = self.setup_board()
 
     def setup_board(self) -> None:
@@ -52,7 +56,7 @@ class Game:
     def calculate_legal_moves(self) -> None:
         for i in range(2):
             Logic.calculate_legal_moves(
-                self.players[i], self.players[1-i], self.board, self.move_history
+                self.players[i], self.players[1-i], self.board, self.move_history, self.material
             )
 
     def make_move(self, from_loc, to_loc, special_move=None):
@@ -62,6 +66,7 @@ class Game:
             self.players[player_index],
             self.players[1-player_index],
             self.move_history,
+            self.material,
             Move(from_loc, to_loc, self.board, special_move)
         )
 
@@ -81,6 +86,5 @@ class Game:
 
     def info(self) -> str:
         return 'legal moves:\n' + pformat(self.get_all_legal_moves()) \
-            + '\nmove history:\n' + pformat(self.move_history)
-
-    # TODO: test move names and implement material
+            + '\nmove history:\n' + pformat(self.move_history) \
+            + '\nmaterial:\n' + pformat(self.material)
