@@ -1,5 +1,7 @@
 from copy import deepcopy
-from .utilities import in_bounds, index_to_letter, loc_to_chess_notation
+from .utilities import (
+    in_bounds, index_to_letter, loc_to_chess_notation, colour_of_square, get_board_string
+)
 from .game_errors import (
     InvalidStartPosError,
     InvalidPlayerError,
@@ -177,6 +179,7 @@ class Logic:
 
         # update material
         is_capture = captured_piece is not None
+        move.is_capture = is_capture
         if is_capture and captured_piece.get_type() != KING:
             material[player.colour][captured_piece.get_type()] += 1
         if promotion_piece is not None:
@@ -207,7 +210,7 @@ class Logic:
             game_status['draw_by'] = 'stalemate'
             game_status['game_result_message'] = 'stalemate'
 
-        elif Logic.is_draw():
+        elif Logic.is_draw(board, player, opponent, move_history):
             game_status['game_finished'] = True
             game_status['game_result'] = 'draw'
             # TODO: implement
@@ -250,10 +253,71 @@ class Logic:
         to_loc_chess_not = loc_to_chess_notation(move.to_loc)
         return f'{include_piece}{include_from_loc}{include_capture}{to_loc_chess_not}{suffix}'
 
-    # TODO: need to check 3-fold repetition, 50 move rule, insufficient mating material
+    # checks 3-fold repetition, 50 move rule, insufficient mating material
     @staticmethod
-    def is_draw():
-        return False
+    def is_draw(board, player, opponent, move_history):
+        insuff_material = Logic.insufficient_mating_material([player, opponent])
+        if insuff_material:
+            return True
+
+        boards = {get_board_string(board): 1}
+
+        entered_loop = False
+        for i in range(len(move_history) - 1, max(-1, len(move_history) - 100), -1):
+            entered_loop = True
+            if move_history[i].board_str_before_move in boards:
+                boards[move_history[i].board_str_before_move] += 1
+                if boards[move_history[i].board_str_before_move] >= 3:
+                    return True
+            else:
+                boards[move_history[i].board_str_before_move] = 1
+
+            assert move_history[i].is_capture is not None
+            if move_history[i].piece_type == PAWNS or move_history[i].is_capture:
+                return False
+
+        return entered_loop
+
+    # using lichess / FIDE rules, i.e. it's only a draw if there's absolutely no mate possible
+    # (it's not a draw if there is a possible mate even if there is no forced mate)
+    @staticmethod
+    def insufficient_mating_material(players):
+        for i, player in enumerate(players):
+            if (
+                len(player.pieces[PAWNS]) > 0
+                or len(player.pieces[KNIGHTS]) >= 2
+                or len(player.pieces[ROOKS]) > 0
+                or len(player.pieces[QUEENS]) > 0
+            ):
+                return False
+            if (
+                len(player.pieces[KNIGHTS]) >= 1
+                and len(player.pieces[BISHOPS]) >= 1
+            ):
+                return False
+            if len(player.pieces[KNIGHTS]) >= 1 and (
+                len(players[1-i].pieces[KNIGHTS]) >= 1
+                or len(players[1-i].pieces[BISHOPS]) >= 1
+            ):
+                return False
+            if len(player.pieces[BISHOPS]) >= 2 and (
+                any(
+                    colour_of_square(bishop.loc) != colour_of_square(player.pieces[BISHOPS][0].loc)
+                    for bishop in player.pieces[BISHOPS]
+                )
+            ):
+                return False
+            if (
+                len(player.pieces[BISHOPS]) >= 1
+                and len(players[1-i].pieces[BISHOPS]) >= 1
+                and any(
+                    colour_of_square(bishop.loc) != colour_of_square(player.pieces[BISHOPS][0].loc)
+                    for bishop in (player.pieces[BISHOPS] + players[1-i].pieces[BISHOPS])
+                )
+            ):
+                return False
+
+        return True
 
     # Might want to move this method into Piece to avoid an extra loop when filtering
     # Would have to pass in player

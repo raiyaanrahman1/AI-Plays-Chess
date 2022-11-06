@@ -28,3 +28,7 @@ def get_board_string(board) -> str:
         result += '|\n'
 
     return result
+
+
+def colour_of_square(loc) -> str:
+    return 'black' if loc[0] % 2 == loc[1] % 2 else 'white'

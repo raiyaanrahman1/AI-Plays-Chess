@@ -8,6 +8,7 @@ class Move:
         self.special_move = special_move
         self.move_name = None
         self.board_str_before_move = get_board_string(board_before_move)
+        self.is_capture = None
         self.move_num = -1  # index of move history - set in Logic.make_move()
 
         if board_before_move[from_loc[0]][from_loc[1]] is None:

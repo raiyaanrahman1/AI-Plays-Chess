@@ -41,6 +41,12 @@ class GameTests(TestCase):
             game.make_move((0, 4), (1, 4))
         self.print(context.exception)
 
+    def test_colour_of_square(self):
+        from .game_classes.utilities import colour_of_square
+        from pprint import pformat
+        print(coloured(150, 0, 255, 'Running test_colour_of_square'))
+        self.print(pformat([[colour_of_square((i, j)) for j in range(8)] for i in range(8)]))
+
     def test_game(self):
         from .game_classes.game import Game
         print(coloured(150, 0, 255, 'Running test_game'))
