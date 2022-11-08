@@ -30,5 +30,18 @@ def get_board_string(board) -> str:
     return result
 
 
+def get_board_representation(board):
+    board_repr = []
+    for row in board:
+        repr_row = []
+        for piece in row:
+            if piece is None:
+                repr_row.append('')
+            else:
+                repr_row.append(piece.colour[0].upper() + piece.get_type())
+        board_repr.append(repr_row)
+    return board_repr
+
+
 def colour_of_square(loc) -> str:
     return 'black' if loc[0] % 2 == loc[1] % 2 else 'white'

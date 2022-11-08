@@ -1,7 +1,7 @@
 from pprint import pformat
 from .player import Player
 from .game_logic import Logic
-from .utilities import get_board_string
+from .utilities import get_board_string, get_board_representation
 from .move import Move
 from .constants import PIECE_TYPES
 from .constants import KING
@@ -82,13 +82,20 @@ class Game:
             for piece_type in PIECE_TYPES:
                 legal_moves[player.colour][piece_type] = []
                 for piece in player.pieces[piece_type].values():
-                    legal_moves[player.colour][piece_type].append(piece.legal_moves)
-            legal_moves[player.colour][KING] = player.pieces[KING].legal_moves
+                    legal_moves[player.colour][piece_type].append(
+                        [str(move) for move in piece.legal_moves]
+                    )
+            legal_moves[player.colour][KING] = [
+                str(move) for move in player.pieces[KING].legal_moves
+            ]
 
         return legal_moves
 
     def __str__(self) -> str:
         return get_board_string(self.board)
+
+    def get_board_repr(self):
+        return get_board_representation(self.board)
 
     def info(self) -> str:
         return 'legal moves:\n' + pformat(self.get_all_legal_moves()) \
