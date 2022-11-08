@@ -203,19 +203,13 @@ class Logic:
             game_status['game_result_message'] = f'{player.colour} won by checkmate'
             move_name_suffix = '#'
 
-        # check for stalemate
-        elif opponent.num_legal_moves == 0:
+        # check for draw
+        is_draw, draw_by = Logic.is_draw(board, player, opponent, move_history, opponent_in_check)
+        if is_draw:
             game_status['game_finished'] = True
             game_status['game_result'] = 'draw'
-            game_status['draw_by'] = 'stalemate'
-            game_status['game_result_message'] = 'stalemate'
-
-        elif Logic.is_draw(board, player, opponent, move_history):
-            game_status['game_finished'] = True
-            game_status['game_result'] = 'draw'
-            # TODO: implement
-            game_status['draw_by'] = 'not implemented'
-            game_status['game_result_message'] = 'not implemented'
+            game_status['draw_by'] = draw_by
+            game_status['game_result_message'] = f'game drawn by {draw_by}'
 
         move.move_name = Logic.get_move_name(move, is_capture, move_name_suffix, player.pieces)
         return game_status
@@ -254,29 +248,31 @@ class Logic:
         return f'{include_piece}{include_from_loc}{include_capture}{to_loc_chess_not}{suffix}'
 
     # checks 3-fold repetition, 50 move rule, insufficient mating material
+    # should not be called before a move is made
     @staticmethod
-    def is_draw(board, player, opponent, move_history):
+    def is_draw(board, player, opponent, move_history, opponent_in_check):
+        if not opponent_in_check and opponent.num_legal_moves == 0:
+            return (True, 'stalemate')
+
         insuff_material = Logic.insufficient_mating_material([player, opponent])
         if insuff_material:
-            return True
+            return (True, 'insufficient material')
 
         boards = {get_board_string(board): 1}
 
-        entered_loop = False
         for i in range(len(move_history) - 1, max(-1, len(move_history) - 100), -1):
-            entered_loop = True
             if move_history[i].board_str_before_move in boards:
                 boards[move_history[i].board_str_before_move] += 1
                 if boards[move_history[i].board_str_before_move] >= 3:
-                    return True
+                    return (True, '3-fold repetition')
             else:
                 boards[move_history[i].board_str_before_move] = 1
 
             assert move_history[i].is_capture is not None
             if move_history[i].piece_type == PAWNS or move_history[i].is_capture:
-                return False
+                return (False, None)
 
-        return entered_loop
+        return (True, '50-move rule')
 
     # using lichess / FIDE rules, i.e. it's only a draw if there's absolutely no mate possible
     # (it's not a draw if there is a possible mate even if there is no forced mate)

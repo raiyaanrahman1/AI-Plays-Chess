@@ -22,6 +22,7 @@ class Game:
             'black': {PAWNS: 0, KNIGHTS: 0, BISHOPS: 0, ROOKS: 0, QUEENS: 0},
         }
         self.board = self.setup_board()
+        self.game_status = {'game_finished': False}
 
     def setup_board(self) -> None:
         return [
@@ -61,7 +62,7 @@ class Game:
 
     def make_move(self, from_loc, to_loc, special_move=None):
         player_index = len(self.move_history) % 2
-        Logic.make_move(
+        self.game_status = Logic.make_move(
             self.board,
             self.players[player_index],
             self.players[1-player_index],
@@ -92,4 +93,5 @@ class Game:
     def info(self) -> str:
         return 'legal moves:\n' + pformat(self.get_all_legal_moves()) \
             + '\nmove history:\n' + pformat(self.move_history) \
-            + '\nmaterial:\n' + pformat(self.material)
+            + '\nmaterial:\n' + pformat(self.material) \
+            + '\ngame status: ' + pformat(self.game_status)
