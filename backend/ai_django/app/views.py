@@ -41,7 +41,13 @@ def create_game(request):
     global game
     game = Game()
     game.calculate_legal_moves()
-    return JsonResponse('created game', safe=False)
+    response = {
+        'board': game.get_board_repr(),
+        'legal_moves': game.get_all_legal_moves(),
+        'material': game.material,
+        'move_history': [str(move) for move in game.move_history]
+    }
+    return JsonResponse(response)
 
 
 @csrf_exempt

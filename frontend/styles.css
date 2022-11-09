@@ -1,0 +1,58 @@
+:root {
+    --square-len: 75px;
+    --piece-len: 70px;
+}
+
+body {
+    background-color: #00041c;
+    color: white;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.ui-elements-wrapper {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    height: 100vh;
+}
+
+#move-history {
+    width: 300px;
+    /* border: 1px solid white; */
+    height: calc(var(--square-len) * 8)
+}
+
+#move-history h2 {
+    text-align: center;
+    text-decoration: underline;
+}
+
+.square {
+    width: var(--square-len);
+    height: var(--square-len);
+}
+
+.light-square {
+    background-color: #edeed1;
+}
+
+.dark-square {
+    background-color: #779952;
+}
+
+.board-row {
+    display: flex;
+}
+
+.piece {
+    width: var(--piece-len);
+    height: var(--piece-len);
+}
+
+.piece-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: var(--square-len);
+    height: var(--square-len);
+}

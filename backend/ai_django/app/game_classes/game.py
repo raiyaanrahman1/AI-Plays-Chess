@@ -72,6 +72,14 @@ class Game:
         )
 
     def get_all_legal_moves(self):
+
+        def get_move_info(move):
+            return {
+                'from_loc': move.from_loc,
+                'to_loc': move.to_loc,
+                'special_move': move.special_move
+            }
+
         legal_moves = {
             'white': {},
             'black': {},
@@ -83,10 +91,10 @@ class Game:
                 legal_moves[player.colour][piece_type] = []
                 for piece in player.pieces[piece_type].values():
                     legal_moves[player.colour][piece_type].append(
-                        [str(move) for move in piece.legal_moves]
+                        [get_move_info(move) for move in piece.legal_moves]
                     )
             legal_moves[player.colour][KING] = [
-                str(move) for move in player.pieces[KING].legal_moves
+                get_move_info(move) for move in player.pieces[KING].legal_moves
             ]
 
         return legal_moves
