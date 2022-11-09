@@ -3,6 +3,11 @@ const baseUrl = window.location.protocol + "//" + window.location.hostname;
 const apiUrl = baseUrl + ':8000/api/';
 
 const squares = Array(8);
+let legalMoves = {};
+let boardData = [];
+let material = {};
+let moveHistory = [];
+
 for (let i = 7; i >= 0; i--) {
     const boardRowEl = document.createElement('div');
     const boardRow = [];
@@ -11,6 +16,7 @@ for (let i = 7; i >= 0; i--) {
         const colour = i % 2 == j % 2 ? 'dark' : 'light';
         const square = document.createElement('div');
         square.classList.add('square', `${colour}-square`);
+        square.id = `${i},${j}`
         boardRowEl.append(square);
         boardRow.push(square);
     }
@@ -18,8 +24,12 @@ for (let i = 7; i >= 0; i--) {
     squares[i] = boardRow;
 }
 
+function letterToColour(letter) {
+    const letterToColour = {'W': 'white', 'B': 'black'};
+    return letterToColour[letter];
+}
+
 function updateBoard(board) {
-    const letterToColour = {'W': 'white', 'B': 'black'}
     const pieceLetterToPiece = {
         'P': 'pawn',
         'B': 'bishop',
@@ -30,14 +40,14 @@ function updateBoard(board) {
     }
     board.forEach((row, i) => {
         row.forEach((piece, j) => {
+            squares[i][j].innerHTML = '';
             if (piece === '') {
-                squares[i][j].innerHTML = '';
                 return;
             }
             const pieceWrapper = document.createElement('div');
             const pieceEl = document.createElement('img');
             const pieceType = pieceLetterToPiece[piece.charAt(1)]
-            pieceEl.src = `assets/${letterToColour[piece.charAt(0)]}_${pieceType}.png`;
+            pieceEl.src = `assets/${letterToColour(piece.charAt(0))}_${pieceType}.png`;
             pieceEl.classList.add('piece');
             if (pieceType === 'pawn') {
                 pieceEl.style.marginLeft = '-3px';
@@ -52,6 +62,13 @@ function updateBoard(board) {
     });
 }
 
+function updateGameState(data) {
+    boardData = data.board;
+    legalMoves = data.legal_moves;
+    material = data.material;
+    moveHistory = data.move_history;
+}
+
 async function createGame() {
     try {
         const res = await fetch(apiUrl + 'create-game', {
@@ -63,17 +80,79 @@ async function createGame() {
         if (!res.ok) throw Error(res.statusText);
         const data = await res.json();
         updateBoard(data.board);
+        updateGameState(data);
     } catch (err) {
         console.log(err);
     }
 }
 
+function arraysEqual(a, b) {
+    if (a === b) return true;
+    if (a == null || b == null) return false;
+    if (a.length !== b.length) return false;
+  
+    for (let i = 0; i < a.length; ++i) {
+      if (a[i] !== b[i]) return false;
+    }
+    return true;
+}
+
+function squareIdToLoc(id) {
+    return [Number(id.charAt(0)), Number(id.charAt(2))];
+}
+
+function locToPieceInfo(loc) {
+    if (boardData[loc[0]][loc[1]] === '') return null;
+
+    const colour = letterToColour(boardData[loc[0]][loc[1]].charAt(0));
+    const pieceType = boardData[loc[0]][loc[1]].charAt(1);
+    return {colour, pieceType};
+}
+
+function moveIsLegal(fromLoc, toLoc, fromLocPieceInfo) {
+    const { colour, pieceType } = fromLocPieceInfo;
+    const turn = moveHistory.length % 2 === 0 ? 'white' : 'black';
+
+    if (turn !== colour) return false;
+
+    for (let piece of legalMoves[colour][pieceType]) {
+        for (let move of piece) {
+            if (
+                arraysEqual(move.from_loc, fromLoc)
+                && arraysEqual(move.to_loc, toLoc)
+            ) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+function makeMove(fromLoc, toLoc, specialMove = null) {
+    return;
+}
+
+let selectedSquareId = null;
 createGame().then(() => {
     $(function() {
         $('.piece-wrapper').draggable({
             containment: '.ui-elements-wrapper',
-            cursor: 'grabbing',
         });
+        $('.piece-wrapper').mousedown(function (e) {
+            const wrapper = e.target.closest('.piece-wrapper');
+            const rect = wrapper.getBoundingClientRect();
+            $(this).css({
+                left: (e.clientX - rect.left) - (rect.width / 2) + 'px',
+                top: (e.clientY - rect.top) - (rect.height / 2) + 'px'
+            });
+        });
+        $('.piece-wrapper').mouseup(function (e) {
+            $(this).css({
+                left: 0,
+                top: 0
+            });
+        })
         $('.square').droppable({
             drop: function (event, ui) {
                 const pieceWrapperInSquare = $(this).find('.piece-wrapper');
@@ -87,6 +166,69 @@ createGame().then(() => {
                 });
             }
         })
+        $('.square').click(function () {
+            if (selectedSquareId === this.id) {
+                selectedSquareId = null;
+                this.classList.remove('selected');
+                return;
+            }
+            
+            if (selectedSquareId !== null) {
+                const fromLoc = squareIdToLoc(selectedSquareId);
+                const pieceInfo = locToPieceInfo(fromLoc);
+                const toLoc = squareIdToLoc(this.id);
+                const toLocPieceInfo = locToPieceInfo(toLoc);
+
+                // TODO: rewrite this stuff so that moveIsLegal passes the move if it's legal so I don't have to check
+                // for en-passent
+                const { pieceType, colour } = pieceInfo;
+                if (
+                    pieceType === 'K'
+                    && toLoc[0] === fromLoc[0]
+                    && (
+                        toLoc[1] === fromLoc[1] + 2
+                        || (
+                            toLocPieceInfo.pieceType === 'R'
+                            && toLoc[1] === fromLoc[1] + 3
+                        )
+                    )
+                    && moveIsLegal(fromLoc, [fromLoc[0], fromLoc[1] + 2], pieceInfo)
+                ) {
+                    makeMove(fromLoc, [fromLoc[0], fromLoc[1] + 2], 'O-O');
+                } else if (
+                    pieceType === 'K'
+                    && toLoc[0] === fromLoc[0]
+                    && (
+                        toLoc[1] === fromLoc[1] - 2
+                        || (
+                            toLocPieceInfo.pieceType === 'R'
+                            && toLoc[1] === fromLoc[1] - 4
+                        )
+                    )
+                    && moveIsLegal(fromLoc, [fromLoc[0], fromLoc[1] - 2], pieceInfo)
+                ) {
+                    makeMove(fromLoc, [fromLoc[0], fromLoc[1] - 2], 'O-O-O');
+                } else if (toLocPieceInfo !== null && toLocPieceInfo.colour === colour) {
+                    document.getElementById(selectedSquareId).classList.remove('selected');
+                    selectedSquareId = this.id;
+                    this.classList.add('selected');
+                    return;
+                }
+
+                if (moveIsLegal(fromLoc, toLoc, pieceInfo)) {
+                    console.log('make move');
+                    makeMove(fromLoc, toLoc);
+                    document.getElementById(selectedSquareId).classList.remove('selected');
+                    selectedSquareId = null;
+                }
+            } else {
+                const loc = squareIdToLoc(this.id);
+                const pieceInfo = locToPieceInfo(loc);
+                if (pieceInfo === null) return;
+                selectedSquareId = this.id;
+                this.classList.add('selected');
+            }
+        });
         $('.ui-elements-wrapper').droppable({
             drop: function (event, ui) {
                 ui.draggable.animate({

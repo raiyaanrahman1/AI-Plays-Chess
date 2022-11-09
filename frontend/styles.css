@@ -56,3 +56,19 @@ body {
     width: var(--square-len);
     height: var(--square-len);
 }
+
+.piece-wrapper:hover {
+    cursor: grab;
+}
+
+.piece-wrapper:active {
+    cursor: grabbing;
+}
+
+.light-square.selected {
+    background-color: #f6f688;
+}
+
+.dark-square.selected {
+    background-color: #bbca43;
+}
