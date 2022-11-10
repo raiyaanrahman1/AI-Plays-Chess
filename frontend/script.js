@@ -129,8 +129,41 @@ function moveIsLegal(fromLoc, toLoc, fromLocPieceInfo) {
     return null;
 }
 
-function makeMove(move) {
-    return;
+function animateMove(move, pieceType, colour, dragged) {
+    if (!(['O-O', 'O-O-O'].includes(move.special_move))) {
+        const fromLocId = move.from_loc.join(',');
+        const fromSquare = document.getElementById(fromLocId);
+        const pieceWrapper = $(fromSquare).find('.piece-wrapper')[0];
+        const computedStyles = getComputedStyle(document.body);
+        const squareLen = parseInt(computedStyles.getPropertyValue('--square-len'));
+        const top = (move.from_loc[0] - move.to_loc[0]) * squareLen + 'px';
+        const left = (move.to_loc[1] - move.from_loc[1]) * squareLen + 'px';
+        $(pieceWrapper).animate({
+            top,
+            left,
+        }, {
+            done: function () {
+                const toLocId = move.to_loc.join(',');
+                const toSquare = document.getElementById(toLocId);
+                if ($(toSquare).find('.piece-wrapper').length > 0) {
+                    $(toSquare).empty();
+                }
+                console.log($(pieceWrapper).detach);
+                $(pieceWrapper).detach().appendTo($(toSquare));
+                $(pieceWrapper).css({
+                    top: "0px",
+                    left: "0px"
+                });
+            }
+        });
+    } else {
+        // TODO: implement
+    }
+}
+
+function makeMove(move, pieceType, colour, dragged) {
+    if (['O-O', 'O-O-O'].includes(move.special_move) || !dragged) animateMove(move, pieceType, colour, dragged);
+    // TODO: sumbit move, then update board
 }
 
 let selectedSquareId = null;
@@ -163,7 +196,7 @@ function moveEvent(focusedSquare, dragged) {
             )
             && (move = moveIsLegal(fromLoc, [fromLoc[0], fromLoc[1] + 2], pieceInfo)) !== null
         ) {
-            makeMove(move);
+            makeMove(move, pieceType, colour, dragged);
             return true;
         } else if (
             pieceType === 'K'
@@ -177,7 +210,7 @@ function moveEvent(focusedSquare, dragged) {
             )
             && (move = moveIsLegal(fromLoc, [fromLoc[0], fromLoc[1] - 2], pieceInfo)) !== null
         ) {
-            makeMove(move);
+            makeMove(move, pieceType, colour, dragged);
             return true;
         } else if (toLocPieceInfo !== null && toLocPieceInfo.colour === colour && !dragged) {
             document.getElementById(selectedSquareId).classList.remove('selected');
@@ -189,7 +222,7 @@ function moveEvent(focusedSquare, dragged) {
         move = moveIsLegal(fromLoc, toLoc, pieceInfo);
         if (move !== null) {
             console.log('make move');
-            makeMove(move);
+            makeMove(move, pieceType, colour, dragged);
             document.getElementById(selectedSquareId).classList.remove('selected');
             selectedSquareId = null;
             return true;

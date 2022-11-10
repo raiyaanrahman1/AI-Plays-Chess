@@ -3,6 +3,7 @@ from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from .game_classes.game import Game
 from .game_classes.game_errors import GameError
+from .game_classes.constants import SPECIAL_MOVES
 
 
 game = None
@@ -62,6 +63,9 @@ def submit_move(request):
         )
     req_from_loc = get_required_tuple_param(request, 'from_loc')
     req_to_loc = get_required_tuple_param(request, 'to_loc')
+    special_move = request.GET.get('special_move')
+    if special_move is not None and special_move not in SPECIAL_MOVES:
+        return JsonResponse(f'special_move {special_move} is invalid', safe=False, status=400)
     for param in (req_from_loc, req_to_loc):
         if not param['success']:
             return JsonResponse(param['message'], safe=False, status=400)
@@ -75,7 +79,7 @@ def submit_move(request):
             status=400
         )
     try:
-        game.make_move(from_loc, to_loc)
+        game.make_move(from_loc, to_loc, special_move)
     except GameError as err:
         return JsonResponse(str(err), safe=False, status=400)
 
