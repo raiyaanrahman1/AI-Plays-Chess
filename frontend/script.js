@@ -113,7 +113,7 @@ function moveIsLegal(fromLoc, toLoc, fromLocPieceInfo) {
     const { colour, pieceType } = fromLocPieceInfo;
     const turn = moveHistory.length % 2 === 0 ? 'white' : 'black';
 
-    if (turn !== colour) return false;
+    if (turn !== colour) return null;
 
     for (let piece of legalMoves[colour][pieceType]) {
         for (let move of piece) {
@@ -121,15 +121,15 @@ function moveIsLegal(fromLoc, toLoc, fromLocPieceInfo) {
                 arraysEqual(move.from_loc, fromLoc)
                 && arraysEqual(move.to_loc, toLoc)
             ) {
-                return true;
+                return move;
             }
         }
     }
 
-    return false;
+    return null;
 }
 
-function makeMove(fromLoc, toLoc, specialMove = null) {
+function makeMove(move) {
     return;
 }
 
@@ -149,8 +149,7 @@ function moveEvent(focusedSquare, dragged) {
         const toLoc = squareIdToLoc(focusedSquare.id);
         const toLocPieceInfo = locToPieceInfo(toLoc);
 
-        // TODO: rewrite this stuff so that moveIsLegal passes the move if it's legal so I don't have to check
-        // for en-passent
+        let move;
         const { pieceType, colour } = pieceInfo;
         if (
             pieceType === 'K'
@@ -162,9 +161,9 @@ function moveEvent(focusedSquare, dragged) {
                     && toLoc[1] === fromLoc[1] + 3
                 )
             )
-            && moveIsLegal(fromLoc, [fromLoc[0], fromLoc[1] + 2], pieceInfo)
+            && (move = moveIsLegal(fromLoc, [fromLoc[0], fromLoc[1] + 2], pieceInfo)) !== null
         ) {
-            makeMove(fromLoc, [fromLoc[0], fromLoc[1] + 2], 'O-O');
+            makeMove(move);
             return true;
         } else if (
             pieceType === 'K'
@@ -176,9 +175,9 @@ function moveEvent(focusedSquare, dragged) {
                     && toLoc[1] === fromLoc[1] - 4
                 )
             )
-            && moveIsLegal(fromLoc, [fromLoc[0], fromLoc[1] - 2], pieceInfo)
+            && (move = moveIsLegal(fromLoc, [fromLoc[0], fromLoc[1] - 2], pieceInfo)) !== null
         ) {
-            makeMove(fromLoc, [fromLoc[0], fromLoc[1] - 2], 'O-O-O');
+            makeMove(move);
             return true;
         } else if (toLocPieceInfo !== null && toLocPieceInfo.colour === colour && !dragged) {
             document.getElementById(selectedSquareId).classList.remove('selected');
@@ -187,9 +186,10 @@ function moveEvent(focusedSquare, dragged) {
             return false;
         }
 
-        if (moveIsLegal(fromLoc, toLoc, pieceInfo)) {
+        move = moveIsLegal(fromLoc, toLoc, pieceInfo);
+        if (move !== null) {
             console.log('make move');
-            makeMove(fromLoc, toLoc);
+            makeMove(move);
             document.getElementById(selectedSquareId).classList.remove('selected');
             selectedSquareId = null;
             return true;
