@@ -135,20 +135,18 @@ function makeMove(fromLoc, toLoc, specialMove = null) {
 
 let selectedSquareId = null;
 
-// TODO: rewrite so that you pass arguments instead of binding to square
-// then, add an argument "dragged" for different behaviours when dragged
-// eg. don't select a new piece when dropping it over one
-function moveEvent() {
-    if (selectedSquareId === this.id) {
+function moveEvent(focusedSquare, dragged) {
+    if (selectedSquareId === focusedSquare.id) {
+        if (dragged) return false;
         selectedSquareId = null;
-        this.classList.remove('selected');
+        focusedSquare.classList.remove('selected');
         return false;
     }
     
     if (selectedSquareId !== null) {
         const fromLoc = squareIdToLoc(selectedSquareId);
         const pieceInfo = locToPieceInfo(fromLoc);
-        const toLoc = squareIdToLoc(this.id);
+        const toLoc = squareIdToLoc(focusedSquare.id);
         const toLocPieceInfo = locToPieceInfo(toLoc);
 
         // TODO: rewrite this stuff so that moveIsLegal passes the move if it's legal so I don't have to check
@@ -182,10 +180,10 @@ function moveEvent() {
         ) {
             makeMove(fromLoc, [fromLoc[0], fromLoc[1] - 2], 'O-O-O');
             return true;
-        } else if (toLocPieceInfo !== null && toLocPieceInfo.colour === colour) {
+        } else if (toLocPieceInfo !== null && toLocPieceInfo.colour === colour && !dragged) {
             document.getElementById(selectedSquareId).classList.remove('selected');
-            selectedSquareId = this.id;
-            this.classList.add('selected');
+            selectedSquareId = focusedSquare.id;
+            focusedSquare.classList.add('selected');
             return false;
         }
 
@@ -197,11 +195,11 @@ function moveEvent() {
             return true;
         }
     } else {
-        const loc = squareIdToLoc(this.id);
+        const loc = squareIdToLoc(focusedSquare.id);
         const pieceInfo = locToPieceInfo(loc);
         if (pieceInfo === null) return false;
-        selectedSquareId = this.id;
-        this.classList.add('selected');
+        selectedSquareId = focusedSquare.id;
+        focusedSquare.classList.add('selected');
     }
 }
 
@@ -215,7 +213,8 @@ createGame().then(() => {
         $('.piece-wrapper').draggable({
             containment: '.ui-elements-wrapper',
             start: function(event, ui) {
-                (moveEvent.bind(this.closest('.square')))();
+                const dragged = true;
+                moveEvent(this.closest('.square'), dragged);
             }
         });
         $('.piece-wrapper').mousedown(function (e) {
@@ -239,7 +238,8 @@ createGame().then(() => {
         })
         $('.square').droppable({
             drop: function (event, ui) {
-                const madeMove = (moveEvent.bind(this))();
+                const dragged = true;
+                const madeMove = moveEvent(this, dragged);
                 
                 if (!madeMove) {
                     ui.draggable.animate({
@@ -261,7 +261,10 @@ createGame().then(() => {
 
             }
         })
-        $('.square').click(moveEvent);
+        $('.square').click(function () {
+            const dragged = false;
+            moveEvent(this, dragged);
+        });
         $('.ui-elements-wrapper').droppable({
             drop: function (event, ui) {
                 ui.draggable.animate({
