@@ -134,10 +134,89 @@ function makeMove(fromLoc, toLoc, specialMove = null) {
 }
 
 let selectedSquareId = null;
+
+// TODO: rewrite so that you pass arguments instead of binding to square
+// then, add an argument "dragged" for different behaviours when dragged
+// eg. don't select a new piece when dropping it over one
+function moveEvent() {
+    if (selectedSquareId === this.id) {
+        selectedSquareId = null;
+        this.classList.remove('selected');
+        return false;
+    }
+    
+    if (selectedSquareId !== null) {
+        const fromLoc = squareIdToLoc(selectedSquareId);
+        const pieceInfo = locToPieceInfo(fromLoc);
+        const toLoc = squareIdToLoc(this.id);
+        const toLocPieceInfo = locToPieceInfo(toLoc);
+
+        // TODO: rewrite this stuff so that moveIsLegal passes the move if it's legal so I don't have to check
+        // for en-passent
+        const { pieceType, colour } = pieceInfo;
+        if (
+            pieceType === 'K'
+            && toLoc[0] === fromLoc[0]
+            && (
+                toLoc[1] === fromLoc[1] + 2
+                || (
+                    toLocPieceInfo.pieceType === 'R'
+                    && toLoc[1] === fromLoc[1] + 3
+                )
+            )
+            && moveIsLegal(fromLoc, [fromLoc[0], fromLoc[1] + 2], pieceInfo)
+        ) {
+            makeMove(fromLoc, [fromLoc[0], fromLoc[1] + 2], 'O-O');
+            return true;
+        } else if (
+            pieceType === 'K'
+            && toLoc[0] === fromLoc[0]
+            && (
+                toLoc[1] === fromLoc[1] - 2
+                || (
+                    toLocPieceInfo.pieceType === 'R'
+                    && toLoc[1] === fromLoc[1] - 4
+                )
+            )
+            && moveIsLegal(fromLoc, [fromLoc[0], fromLoc[1] - 2], pieceInfo)
+        ) {
+            makeMove(fromLoc, [fromLoc[0], fromLoc[1] - 2], 'O-O-O');
+            return true;
+        } else if (toLocPieceInfo !== null && toLocPieceInfo.colour === colour) {
+            document.getElementById(selectedSquareId).classList.remove('selected');
+            selectedSquareId = this.id;
+            this.classList.add('selected');
+            return false;
+        }
+
+        if (moveIsLegal(fromLoc, toLoc, pieceInfo)) {
+            console.log('make move');
+            makeMove(fromLoc, toLoc);
+            document.getElementById(selectedSquareId).classList.remove('selected');
+            selectedSquareId = null;
+            return true;
+        }
+    } else {
+        const loc = squareIdToLoc(this.id);
+        const pieceInfo = locToPieceInfo(loc);
+        if (pieceInfo === null) return false;
+        selectedSquareId = this.id;
+        this.classList.add('selected');
+    }
+}
+
+let mouseX = null, mouseY = null;
+// TODO: when dragging a piece over a square, highlight the square with
+// an outline so you know exactly which square your mouse is over
+// sometimes you can't tell which one if your near the edge
+// see chess.com behaviour
 createGame().then(() => {
     $(function() {
         $('.piece-wrapper').draggable({
             containment: '.ui-elements-wrapper',
+            start: function(event, ui) {
+                (moveEvent.bind(this.closest('.square')))();
+            }
         });
         $('.piece-wrapper').mousedown(function (e) {
             const wrapper = e.target.closest('.piece-wrapper');
@@ -146,15 +225,30 @@ createGame().then(() => {
                 left: (e.clientX - rect.left) - (rect.width / 2) + 'px',
                 top: (e.clientY - rect.top) - (rect.height / 2) + 'px'
             });
+            mouseX = e.clientX;
+            mouseY = e.clientY;
         });
         $('.piece-wrapper').mouseup(function (e) {
-            $(this).css({
-                left: 0,
-                top: 0
-            });
+            if (e.clientX === mouseX && e.clientY === mouseY) {
+                $(this).css({
+                    left: 0,
+                    top: 0
+                });
+            }
+            mouseX = null, mouseY = null;
         })
         $('.square').droppable({
             drop: function (event, ui) {
+                const madeMove = (moveEvent.bind(this))();
+                
+                if (!madeMove) {
+                    ui.draggable.animate({
+                        top: "0px",
+                        left: "0px"
+                    });
+                    return;
+                }
+                
                 const pieceWrapperInSquare = $(this).find('.piece-wrapper');
                 if (pieceWrapperInSquare.length > 0 && !pieceWrapperInSquare.first().is(ui.draggable)) {
                     $(this).empty();
@@ -164,71 +258,10 @@ createGame().then(() => {
                     top: "0px",
                     left: "0px"
                 });
+
             }
         })
-        $('.square').click(function () {
-            if (selectedSquareId === this.id) {
-                selectedSquareId = null;
-                this.classList.remove('selected');
-                return;
-            }
-            
-            if (selectedSquareId !== null) {
-                const fromLoc = squareIdToLoc(selectedSquareId);
-                const pieceInfo = locToPieceInfo(fromLoc);
-                const toLoc = squareIdToLoc(this.id);
-                const toLocPieceInfo = locToPieceInfo(toLoc);
-
-                // TODO: rewrite this stuff so that moveIsLegal passes the move if it's legal so I don't have to check
-                // for en-passent
-                const { pieceType, colour } = pieceInfo;
-                if (
-                    pieceType === 'K'
-                    && toLoc[0] === fromLoc[0]
-                    && (
-                        toLoc[1] === fromLoc[1] + 2
-                        || (
-                            toLocPieceInfo.pieceType === 'R'
-                            && toLoc[1] === fromLoc[1] + 3
-                        )
-                    )
-                    && moveIsLegal(fromLoc, [fromLoc[0], fromLoc[1] + 2], pieceInfo)
-                ) {
-                    makeMove(fromLoc, [fromLoc[0], fromLoc[1] + 2], 'O-O');
-                } else if (
-                    pieceType === 'K'
-                    && toLoc[0] === fromLoc[0]
-                    && (
-                        toLoc[1] === fromLoc[1] - 2
-                        || (
-                            toLocPieceInfo.pieceType === 'R'
-                            && toLoc[1] === fromLoc[1] - 4
-                        )
-                    )
-                    && moveIsLegal(fromLoc, [fromLoc[0], fromLoc[1] - 2], pieceInfo)
-                ) {
-                    makeMove(fromLoc, [fromLoc[0], fromLoc[1] - 2], 'O-O-O');
-                } else if (toLocPieceInfo !== null && toLocPieceInfo.colour === colour) {
-                    document.getElementById(selectedSquareId).classList.remove('selected');
-                    selectedSquareId = this.id;
-                    this.classList.add('selected');
-                    return;
-                }
-
-                if (moveIsLegal(fromLoc, toLoc, pieceInfo)) {
-                    console.log('make move');
-                    makeMove(fromLoc, toLoc);
-                    document.getElementById(selectedSquareId).classList.remove('selected');
-                    selectedSquareId = null;
-                }
-            } else {
-                const loc = squareIdToLoc(this.id);
-                const pieceInfo = locToPieceInfo(loc);
-                if (pieceInfo === null) return;
-                selectedSquareId = this.id;
-                this.classList.add('selected');
-            }
-        });
+        $('.square').click(moveEvent);
         $('.ui-elements-wrapper').droppable({
             drop: function (event, ui) {
                 ui.draggable.animate({
