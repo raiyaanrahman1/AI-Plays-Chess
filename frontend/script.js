@@ -8,6 +8,10 @@ let boardData = [];
 let material = {};
 let moveHistory = [];
 
+const SQUARE_LEN = parseInt(
+    getComputedStyle(document.body).getPropertyValue('--square-len')
+);
+
 for (let i = 7; i >= 0; i--) {
     const boardRowEl = document.createElement('div');
     const boardRow = [];
@@ -68,7 +72,7 @@ function updateGameState(data) {
     legalMoves = data.legal_moves;
     material = data.material;
     moveHistory = data.move_history;
-    console.log(legalMoves);
+    console.log(boardData, legalMoves);
 }
 
 async function createGame() {
@@ -162,14 +166,20 @@ function moveIsLegal(fromLoc, toLoc, fromLocPieceInfo) {
     return null;
 }
 
-function animateMoveHelper(fromLoc, toLoc) {
+function animateMoveHelper(fromLoc, toLoc, pieceWrapperOverride = null) {
     const fromLocId = fromLoc.join(',');
     const fromSquare = document.getElementById(fromLocId);
-    const pieceWrapper = $(fromSquare).find('.piece-wrapper')[0];
-    const computedStyles = getComputedStyle(document.body);
-    const squareLen = parseInt(computedStyles.getPropertyValue('--square-len'));
-    const top = (fromLoc[0] - toLoc[0]) * squareLen + 'px';
-    const left = (toLoc[1] - fromLoc[1]) * squareLen + 'px';
+    let pieceWrapper;
+    
+    if (pieceWrapperOverride === null) {
+        pieceWrapper = $(fromSquare).find('.piece-wrapper')[0];
+    } else {
+        pieceWrapper = pieceWrapperOverride;
+    }
+    const top = (fromLoc[0] - toLoc[0]) * SQUARE_LEN + 'px';
+    const leftStart = pieceWrapper.style.left === '' ? 0 : parseInt(pieceWrapper.style.left);
+    const left = (leftStart + (toLoc[1] - fromLoc[1]) * SQUARE_LEN) + 'px';
+    resetPos = false;
 
     return new Promise((resolve) => {
         $(pieceWrapper).animate({
@@ -188,13 +198,14 @@ function animateMoveHelper(fromLoc, toLoc) {
                     top: "0px",
                     left: "0px"
                 });
+                resetPos = true;
                 resolve();
             }
         });
     })
 }
 
-function animateMove(move, pieceType, colour, dragged) {
+function animateMove(move, pieceType, colour, focusedSquare, dragged) {
     const promises = [];
     if (!dragged) {
         promises.push(animateMoveHelper(move.from_loc, move.to_loc));
@@ -206,6 +217,19 @@ function animateMove(move, pieceType, colour, dragged) {
         const toLocCol = move.special_move === 'O-O' ? move.from_loc[1] + 1 : move.from_loc[1] - 1;
         const toLoc = [move.from_loc[0], toLocCol];
         promises.push(animateMoveHelper(rookLoc, toLoc));
+
+        if (dragged) {
+            const focusedSquareLoc = squareIdToLoc(focusedSquare.id);
+            const top = 0;
+            const left = (focusedSquareLoc[1] - move.from_loc[1]) * SQUARE_LEN + 'px';
+            const kingSquare = document.getElementById(move.from_loc.join(','));
+            const king = $(kingSquare).find('.piece-wrapper')[0];
+            $(king).css({
+                top,
+                left,
+            });
+            promises.push(animateMoveHelper(focusedSquareLoc, move.to_loc, king));
+        }
     }
 
     // TODO: need a special case if the player dragged the king onto the rook
@@ -215,24 +239,23 @@ function animateMove(move, pieceType, colour, dragged) {
     return promises;
 }
 
-function makeMove(move, pieceType, colour, dragged) {
+async function makeMove(move, pieceType, colour, focusedSquare, dragged) {
     let promises = [];
     if (['O-O', 'O-O-O'].includes(move.special_move) || !dragged) {
-        promises = animateMove(move, pieceType, colour, dragged);
+        promises = animateMove(move, pieceType, colour, focusedSquare, dragged);
     }
-    Promise.all(promises).then(() => {
-        submitMove(move);
-    });
+    await Promise.all(promises);
+    await submitMove(move);
 }
 
 let selectedSquareId = null;
 
-function moveEvent(focusedSquare, dragged) {
+async function moveEvent(focusedSquare, dragged) {
     if (selectedSquareId === focusedSquare.id) {
-        if (dragged) return false;
+        if (dragged) return null;
         selectedSquareId = null;
         focusedSquare.classList.remove('selected');
-        return false;
+        return null;
     }
     
     if (selectedSquareId !== null) {
@@ -256,10 +279,10 @@ function moveEvent(focusedSquare, dragged) {
             )
             && (move = moveIsLegal(fromLoc, [fromLoc[0], fromLoc[1] + 2], pieceInfo)) !== null
         ) {
-            makeMove(move, pieceType, colour, dragged);
+            makeMove(move, pieceType, colour, focusedSquare, dragged);
             document.getElementById(selectedSquareId).classList.remove('selected');
             selectedSquareId = null;
-            return true;
+            return move;
         } else if (
             pieceType === 'K'
             && toLoc[0] === fromLoc[0]
@@ -273,28 +296,28 @@ function moveEvent(focusedSquare, dragged) {
             )
             && (move = moveIsLegal(fromLoc, [fromLoc[0], fromLoc[1] - 2], pieceInfo)) !== null
         ) {
-            makeMove(move, pieceType, colour, dragged);
+            makeMove(move, pieceType, colour, focusedSquare, dragged);
             document.getElementById(selectedSquareId).classList.remove('selected');
             selectedSquareId = null;
-            return true;
+            return move;
         } else if (toLocPieceInfo !== null && toLocPieceInfo.colour === colour && !dragged) {
             document.getElementById(selectedSquareId).classList.remove('selected');
             selectedSquareId = focusedSquare.id;
             focusedSquare.classList.add('selected');
-            return false;
+            return null;
         }
 
         move = moveIsLegal(fromLoc, toLoc, pieceInfo);
         if (move !== null) {
-            makeMove(move, pieceType, colour, dragged);
+            makeMove(move, pieceType, colour, focusedSquare, dragged);
             document.getElementById(selectedSquareId).classList.remove('selected');
             selectedSquareId = null;
-            return true;
+            return move;
         }
     } else {
         const loc = squareIdToLoc(focusedSquare.id);
         const pieceInfo = locToPieceInfo(loc);
-        if (pieceInfo === null) return false;
+        if (pieceInfo === null) return null;
         selectedSquareId = focusedSquare.id;
         focusedSquare.classList.add('selected');
     }
@@ -330,6 +353,7 @@ function setPieceWrapperEvents() {
 }
 
 let mouseX = null, mouseY = null;
+let resetPos = true;
 // TODO: when dragging a piece over a square, highlight the square with
 // an outline so you know exactly which square your mouse is over
 // sometimes you can't tell which one if your near the edge
@@ -337,27 +361,29 @@ let mouseX = null, mouseY = null;
 createGame().then(() => {
     $(function() {
         $('.square').droppable({
-            drop: function (event, ui) {
+            drop: async function (event, ui) {
                 const dragged = true;
-                const madeMove = moveEvent(this, dragged);
+                const move = await moveEvent(this, dragged);
                 
-                if (!madeMove) {
-                    ui.draggable.animate({
-                        top: "0px",
-                        left: "0px"
-                    });
-                    return;
-                }
+                // if (move === null) {
+                //     ui.draggable.animate({
+                //         top: "0px",
+                //         left: "0px"
+                //     });
+                //     return;
+                // } else if (['O-O', 'O-O-O'].includes(move.special_move)) {
+                //     return;
+                // }
                 
-                const pieceWrapperInSquare = $(this).find('.piece-wrapper');
-                if (pieceWrapperInSquare.length > 0 && !pieceWrapperInSquare.first().is(ui.draggable)) {
-                    $(this).empty();
-                }
-                ui.draggable.detach().appendTo($(this));
-                ui.draggable.css({
-                    top: "0px",
-                    left: "0px"
-                });
+                // const pieceWrapperInSquare = $(this).find('.piece-wrapper');
+                // if (pieceWrapperInSquare.length > 0 && !pieceWrapperInSquare.first().is(ui.draggable)) {
+                //     $(this).empty();
+                // }
+                // ui.draggable.detach().appendTo($(this));
+                // ui.draggable.css({
+                //     top: "0px",
+                //     left: "0px"
+                // });
 
             }
         })
@@ -367,10 +393,12 @@ createGame().then(() => {
         });
         $('.ui-elements-wrapper').droppable({
             drop: function (event, ui) {
-                ui.draggable.animate({
-                    top: "0px",
-                    left: "0px"
-                });
+                if (resetPos) {
+                    ui.draggable.animate({
+                        top: "0px",
+                        left: "0px"
+                    });
+                }
             }
         })
     });
