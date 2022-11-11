@@ -138,7 +138,7 @@ function moveIsLegal(fromLoc, toLoc, fromLocPieceInfo) {
 
     if (turn !== colour) return null;
 
-    for (let piece of legalMoves[colour][pieceType]) {
+    function checkPieceMoves(piece) {
         for (let move of piece) {
             if (
                 arraysEqual(move.from_loc, fromLoc)
@@ -147,6 +147,16 @@ function moveIsLegal(fromLoc, toLoc, fromLocPieceInfo) {
                 return move;
             }
         }
+        return null;
+    }
+
+    if (pieceType === 'K') {
+        return checkPieceMoves(legalMoves[colour][pieceType]);
+    }
+
+    for (let piece of legalMoves[colour][pieceType]) {
+        const containsMove = checkPieceMoves(piece);
+        if (containsMove !== null) return containsMove;
     }
 
     return null;
@@ -239,13 +249,16 @@ function moveEvent(focusedSquare, dragged) {
             && (
                 toLoc[1] === fromLoc[1] + 2
                 || (
-                    toLocPieceInfo.pieceType === 'R'
+                    toLocPieceInfo !== null
+                    && toLocPieceInfo.pieceType === 'R'
                     && toLoc[1] === fromLoc[1] + 3
                 )
             )
             && (move = moveIsLegal(fromLoc, [fromLoc[0], fromLoc[1] + 2], pieceInfo)) !== null
         ) {
             makeMove(move, pieceType, colour, dragged);
+            document.getElementById(selectedSquareId).classList.remove('selected');
+            selectedSquareId = null;
             return true;
         } else if (
             pieceType === 'K'
@@ -253,13 +266,16 @@ function moveEvent(focusedSquare, dragged) {
             && (
                 toLoc[1] === fromLoc[1] - 2
                 || (
-                    toLocPieceInfo.pieceType === 'R'
+                    toLocPieceInfo !== null
+                    && toLocPieceInfo.pieceType === 'R'
                     && toLoc[1] === fromLoc[1] - 4
                 )
             )
             && (move = moveIsLegal(fromLoc, [fromLoc[0], fromLoc[1] - 2], pieceInfo)) !== null
         ) {
             makeMove(move, pieceType, colour, dragged);
+            document.getElementById(selectedSquareId).classList.remove('selected');
+            selectedSquareId = null;
             return true;
         } else if (toLocPieceInfo !== null && toLocPieceInfo.colour === colour && !dragged) {
             document.getElementById(selectedSquareId).classList.remove('selected');

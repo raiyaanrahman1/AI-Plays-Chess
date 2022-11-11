@@ -220,7 +220,7 @@ class Logic:
 
         extra_potential_from_locs = []
         if piece_type in (KNIGHTS, BISHOPS, ROOKS, QUEENS):
-            for piece in player_pieces[piece_type]:
+            for piece in player_pieces[piece_type].values():
                 if (
                     piece.id != move.piece_id
                     and any(other_move.to_loc == move.to_loc for other_move in piece.legal_moves)
@@ -315,43 +315,30 @@ class Logic:
 
         return True
 
-    # Might want to move this method into Piece to avoid an extra loop when filtering
-    # Would have to pass in player
     @staticmethod
     def in_check_after_move(board, move_history, material, player, opponent, move) -> bool:
-        # to avoid deep-copying the board, we can make the changes on the board itself
-        # and then reverse the changes
         from_loc = move.from_loc
         to_loc = move.to_loc
-        board_from = board[from_loc[0]][from_loc[1]]
-        board_to = board[to_loc[0]][to_loc[1]]
+
+        temp_board = deepcopy(board)
+        # TODO: might want to build temp player pieces from board
+        # so that they reference the same objects
         temp_player = deepcopy(player)
         temp_opponent = deepcopy(opponent)
-        piece = temp_player.pieces[board_from.get_type()] if board_from.get_type() == KING \
-            else temp_player.pieces[board_from.get_type()][board_from.id]
-        board[from_loc[0]][from_loc[1]] = piece
-        if board_to is not None and board_to.colour == player.colour:
-            raise InternalIllegalMoveError(
-                player.colour, board_from.get_name(), from_loc, to_loc, move.special_move
-            )
-        if board_to is not None:
-            temp_opponent.pieces[board_to.get_type()].pop(board_to.id)
 
         Logic.make_move(
-            board,
+            temp_board,
             temp_player,
             temp_opponent,
             move_history,
-            material,
+            deepcopy(material),
             Move(from_loc, to_loc, board, move.special_move),
             False
         )
 
-        in_check = Logic.in_check(board, player, opponent)
+        in_check = Logic.in_check(temp_board, temp_player, temp_opponent)
 
         move_history.pop()
-        board[from_loc[0]][from_loc[1]] = board_from
-        board[to_loc[0]][to_loc[1]] = board_to
 
         return in_check
 
