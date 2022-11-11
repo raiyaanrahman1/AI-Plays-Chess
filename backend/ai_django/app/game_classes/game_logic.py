@@ -135,6 +135,7 @@ class Logic:
 
             # update board
             board[from_loc[0]][from_loc[1]] = None
+            board[from_loc[0]][from_loc[1] - 1] = None
             board[to_loc[0]][to_loc[1]] = piece
 
         elif move.special_move == ENPASSANT_RIGHT:
@@ -145,6 +146,7 @@ class Logic:
 
             # update board
             board[from_loc[0]][from_loc[1]] = None
+            board[from_loc[0]][from_loc[1] + 1] = None
             board[to_loc[0]][to_loc[1]] = piece
 
         elif move.special_move.startswith('promote'):
