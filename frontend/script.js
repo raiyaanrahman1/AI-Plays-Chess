@@ -60,6 +60,7 @@ function updateBoard(board) {
             squares[i][j].append(pieceWrapper);
         })
     });
+    setPieceWrapperEvents();
 }
 
 function updateGameState(data) {
@@ -67,11 +68,33 @@ function updateGameState(data) {
     legalMoves = data.legal_moves;
     material = data.material;
     moveHistory = data.move_history;
+    console.log(legalMoves);
 }
 
 async function createGame() {
     try {
         const res = await fetch(apiUrl + 'create-game', {
+            method: "POST",
+            headers: {
+                'content-type': "application/json"
+            },
+        });
+        if (!res.ok) throw Error(res.statusText);
+        const data = await res.json();
+        updateBoard(data.board);
+        updateGameState(data);
+    } catch (err) {
+        console.log(err);
+    }
+}
+
+async function submitMove({from_loc, to_loc, special_move}) {
+    try {
+        const res = await fetch(apiUrl + 'submit-move?' + new URLSearchParams({
+            from_loc,
+            to_loc,
+            special_move
+        }), {
             method: "POST",
             headers: {
                 'content-type': "application/json"
@@ -129,41 +152,67 @@ function moveIsLegal(fromLoc, toLoc, fromLocPieceInfo) {
     return null;
 }
 
-function animateMove(move, pieceType, colour, dragged) {
-    if (!(['O-O', 'O-O-O'].includes(move.special_move))) {
-        const fromLocId = move.from_loc.join(',');
-        const fromSquare = document.getElementById(fromLocId);
-        const pieceWrapper = $(fromSquare).find('.piece-wrapper')[0];
-        const computedStyles = getComputedStyle(document.body);
-        const squareLen = parseInt(computedStyles.getPropertyValue('--square-len'));
-        const top = (move.from_loc[0] - move.to_loc[0]) * squareLen + 'px';
-        const left = (move.to_loc[1] - move.from_loc[1]) * squareLen + 'px';
+function animateMoveHelper(fromLoc, toLoc) {
+    const fromLocId = fromLoc.join(',');
+    const fromSquare = document.getElementById(fromLocId);
+    const pieceWrapper = $(fromSquare).find('.piece-wrapper')[0];
+    const computedStyles = getComputedStyle(document.body);
+    const squareLen = parseInt(computedStyles.getPropertyValue('--square-len'));
+    const top = (fromLoc[0] - toLoc[0]) * squareLen + 'px';
+    const left = (toLoc[1] - fromLoc[1]) * squareLen + 'px';
+
+    return new Promise((resolve) => {
         $(pieceWrapper).animate({
             top,
             left,
         }, {
             done: function () {
-                const toLocId = move.to_loc.join(',');
+                const toLocId = toLoc.join(',');
                 const toSquare = document.getElementById(toLocId);
                 if ($(toSquare).find('.piece-wrapper').length > 0) {
                     $(toSquare).empty();
                 }
-                console.log($(pieceWrapper).detach);
+    
                 $(pieceWrapper).detach().appendTo($(toSquare));
                 $(pieceWrapper).css({
                     top: "0px",
                     left: "0px"
                 });
+                resolve();
             }
         });
-    } else {
-        // TODO: implement
+    })
+}
+
+function animateMove(move, pieceType, colour, dragged) {
+    const promises = [];
+    if (!dragged) {
+        promises.push(animateMoveHelper(move.from_loc, move.to_loc));
     }
+
+    if (['O-O', 'O-O-O'].includes(move.special_move)) {
+        const rookSquareCol = move.special_move === 'O-O' ? move.from_loc[1] + 3 : move.from_loc[1] - 4;
+        const rookLoc = [move.from_loc[0], rookSquareCol];
+        const toLocCol = move.special_move === 'O-O' ? move.from_loc[1] + 1 : move.from_loc[1] - 1;
+        const toLoc = [move.from_loc[0], toLocCol];
+        promises.push(animateMoveHelper(rookLoc, toLoc));
+    }
+
+    // TODO: need a special case if the player dragged the king onto the rook
+    // Then, first set the css for the king to be exactly on the rooks square
+    // Then animate the king to the correct position
+
+    return promises;
 }
 
 function makeMove(move, pieceType, colour, dragged) {
-    if (['O-O', 'O-O-O'].includes(move.special_move) || !dragged) animateMove(move, pieceType, colour, dragged);
-    // TODO: sumbit move, then update board
+    let promises = [];
+    if (['O-O', 'O-O-O'].includes(move.special_move) || !dragged) {
+        promises = animateMove(move, pieceType, colour, dragged);
+    }
+    Promise.all(promises).then(() => {
+        submitMove(move);
+    });
 }
 
 let selectedSquareId = null;
@@ -221,7 +270,6 @@ function moveEvent(focusedSquare, dragged) {
 
         move = moveIsLegal(fromLoc, toLoc, pieceInfo);
         if (move !== null) {
-            console.log('make move');
             makeMove(move, pieceType, colour, dragged);
             document.getElementById(selectedSquareId).classList.remove('selected');
             selectedSquareId = null;
@@ -236,6 +284,35 @@ function moveEvent(focusedSquare, dragged) {
     }
 }
 
+function setPieceWrapperEvents() {
+    $('.piece-wrapper').draggable({
+        containment: '.ui-elements-wrapper',
+        start: function(event, ui) {
+            const dragged = true;
+            moveEvent(this.closest('.square'), dragged);
+        }
+    });
+    $('.piece-wrapper').mousedown(function (e) {
+        const wrapper = e.target.closest('.piece-wrapper');
+        const rect = wrapper.getBoundingClientRect();
+        $(this).css({
+            left: (e.clientX - rect.left) - (rect.width / 2) + 'px',
+            top: (e.clientY - rect.top) - (rect.height / 2) + 'px'
+        });
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+    });
+    $('.piece-wrapper').mouseup(function (e) {
+        if (e.clientX === mouseX && e.clientY === mouseY) {
+            $(this).css({
+                left: 0,
+                top: 0
+            });
+        }
+        mouseX = null, mouseY = null;
+    });
+}
+
 let mouseX = null, mouseY = null;
 // TODO: when dragging a piece over a square, highlight the square with
 // an outline so you know exactly which square your mouse is over
@@ -243,32 +320,6 @@ let mouseX = null, mouseY = null;
 // see chess.com behaviour
 createGame().then(() => {
     $(function() {
-        $('.piece-wrapper').draggable({
-            containment: '.ui-elements-wrapper',
-            start: function(event, ui) {
-                const dragged = true;
-                moveEvent(this.closest('.square'), dragged);
-            }
-        });
-        $('.piece-wrapper').mousedown(function (e) {
-            const wrapper = e.target.closest('.piece-wrapper');
-            const rect = wrapper.getBoundingClientRect();
-            $(this).css({
-                left: (e.clientX - rect.left) - (rect.width / 2) + 'px',
-                top: (e.clientY - rect.top) - (rect.height / 2) + 'px'
-            });
-            mouseX = e.clientX;
-            mouseY = e.clientY;
-        });
-        $('.piece-wrapper').mouseup(function (e) {
-            if (e.clientX === mouseX && e.clientY === mouseY) {
-                $(this).css({
-                    left: 0,
-                    top: 0
-                });
-            }
-            mouseX = null, mouseY = null;
-        })
         $('.square').droppable({
             drop: function (event, ui) {
                 const dragged = true;

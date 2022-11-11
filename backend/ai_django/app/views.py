@@ -64,6 +64,8 @@ def submit_move(request):
     req_from_loc = get_required_tuple_param(request, 'from_loc')
     req_to_loc = get_required_tuple_param(request, 'to_loc')
     special_move = request.GET.get('special_move')
+    if special_move == 'null':
+        special_move = None
     if special_move is not None and special_move not in SPECIAL_MOVES:
         return JsonResponse(f'special_move {special_move} is invalid', safe=False, status=400)
     for param in (req_from_loc, req_to_loc):
