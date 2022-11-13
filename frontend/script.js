@@ -305,12 +305,12 @@ async function makeMove(move, pieceType, colour, focusedSquare, dragged) {
 
 let selectedSquareId = null;
 
-function moveEvent(focusedSquare, dragged, dropped = false) {
+async function moveEvent(focusedSquare, dragged, dropped = false) {
     if (selectedSquareId === focusedSquare.id) {
-        if (dragged) return null;
+        if (dragged) return;
         selectedSquareId = null;
         focusedSquare.classList.remove('selected');
-        return null;
+        return;
     }
     
     if (selectedSquareId !== null) {
@@ -334,10 +334,10 @@ function moveEvent(focusedSquare, dragged, dropped = false) {
             )
             && (move = moveIsLegal(fromLoc, [fromLoc[0], fromLoc[1] + 2], pieceInfo)) !== null
         ) {
-            makeMove(move, pieceType, colour, focusedSquare, dragged);
             document.getElementById(selectedSquareId).classList.remove('selected');
             selectedSquareId = null;
-            return move;
+            await makeMove(move, pieceType, colour, focusedSquare, dragged);
+            return;
         } else if (
             pieceType === 'K'
             && toLoc[0] === fromLoc[0]
@@ -351,33 +351,33 @@ function moveEvent(focusedSquare, dragged, dropped = false) {
             )
             && (move = moveIsLegal(fromLoc, [fromLoc[0], fromLoc[1] - 2], pieceInfo)) !== null
         ) {
-            makeMove(move, pieceType, colour, focusedSquare, dragged);
             document.getElementById(selectedSquareId).classList.remove('selected');
             selectedSquareId = null;
-            return move;
+            await makeMove(move, pieceType, colour, focusedSquare, dragged);
+            return;
         } else if (toLocPieceInfo !== null && toLocPieceInfo.colour === colour && !dropped) {
             document.getElementById(selectedSquareId).classList.remove('selected');
             selectedSquareId = focusedSquare.id;
             focusedSquare.classList.add('selected');
-            return null;
+            return;
         }
 
         move = moveIsLegal(fromLoc, toLoc, pieceInfo);
         if (move !== null) {
-            makeMove(move, pieceType, colour, focusedSquare, dragged);
             document.getElementById(selectedSquareId).classList.remove('selected');
             selectedSquareId = null;
-            return move;
+            await makeMove(move, pieceType, colour, focusedSquare, dragged);
+            return;
         } else if (toLocPieceInfo !== null && toLocPieceInfo.colour !== colour && !dropped) {
             document.getElementById(selectedSquareId).classList.remove('selected');
             selectedSquareId = focusedSquare.id;
             focusedSquare.classList.add('selected');
-            return null;
+            return;
         }
     } else {
         const loc = squareIdToLoc(focusedSquare.id);
         const pieceInfo = locToPieceInfo(loc);
-        if (pieceInfo === null) return null;
+        if (pieceInfo === null) return;
         selectedSquareId = focusedSquare.id;
         focusedSquare.classList.add('selected');
     }
@@ -414,6 +414,7 @@ function setPieceWrapperEvents() {
 
 let mouseX = null, mouseY = null;
 let resetPos = true;
+let ui_drop_promise = new Promise((resolve) => resolve());
 // TODO: when dragging a piece over a square, highlight the square with
 // an outline so you know exactly which square your mouse is over
 // sometimes you can't tell which one if your near the edge
@@ -424,28 +425,11 @@ createGame().then(() => {
             drop: async function (event, ui) {
                 const dragged = true;
                 const dropped = true;
-                moveEvent(this, dragged, dropped);
-                
-                // if (move === null) {
-                //     ui.draggable.animate({
-                //         top: "0px",
-                //         left: "0px"
-                //     });
-                //     return;
-                // } else if (['O-O', 'O-O-O'].includes(move.special_move)) {
-                //     return;
-                // }
-                
-                // const pieceWrapperInSquare = $(this).find('.piece-wrapper');
-                // if (pieceWrapperInSquare.length > 0 && !pieceWrapperInSquare.first().is(ui.draggable)) {
-                //     $(this).empty();
-                // }
-                // ui.draggable.detach().appendTo($(this));
-                // ui.draggable.css({
-                //     top: "0px",
-                //     left: "0px"
-                // });
-
+                ui_drop_promise = new Promise(async (resolve) => {
+                    await moveEvent(this, dragged, dropped);
+                    ui_drop_promise = new Promise((resolve) => resolve());
+                    resolve();
+                });
             }
         })
         $('.square').click(function () {
@@ -454,12 +438,14 @@ createGame().then(() => {
         });
         $('.ui-elements-wrapper').droppable({
             drop: function (event, ui) {
-                if (resetPos) {
-                    ui.draggable.animate({
-                        top: "0px",
-                        left: "0px"
-                    });
-                }
+                ui_drop_promise.then(() => {
+                    if (resetPos) {
+                        ui.draggable.animate({
+                            top: "0px",
+                            left: "0px"
+                        });
+                    }
+                })
             }
         })
     });
