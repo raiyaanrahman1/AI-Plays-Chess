@@ -29,12 +29,31 @@ PAWNS, KNIGHTS, BISHOPS, ROOKS, QUEENS = PIECE_TYPES
 # TODO: make the order of parameters consistent for these methods
 class Logic:
     @staticmethod
+    def calculate_moves_for_both_players(
+        player, opponent, board, move_history, material, check_checks=True
+    ):
+        player.pieces[KING].calculate_moves(board, move_history)
+        opponent.pieces[KING].calculate_moves(board, move_history)
+        for piece_type in PIECE_TYPES:
+            for piece in player.pieces[piece_type].values():
+                piece.calculate_moves(board, move_history)
+            for piece in opponent.pieces[piece_type].values():
+                piece.calculate_moves(board, move_history)
+
+        player_in_check = Logic.calculate_legal_moves(
+            player, opponent, board, move_history, material, check_checks
+        )
+        opponent_in_check = Logic.calculate_legal_moves(
+            opponent, player, board, move_history, material, check_checks
+        )
+        return (player_in_check, opponent_in_check)
+
+    @staticmethod
     def calculate_legal_moves(player, opponent, board, move_history, material, check_checks=True):
         in_check = Logic.in_check(board, player, opponent)
         player.num_legal_moves = 0
 
         def helper(piece):
-            piece.calculate_moves(board, move_history)
             if not check_checks:
                 return
             if in_check:
@@ -195,12 +214,16 @@ class Logic:
             material[opponent.colour][PAWNS] += 1
 
         # update legal moves
-        Logic.calculate_legal_moves(player, opponent, board, move_history, material, check_checks)
-        opponent_in_check = Logic.calculate_legal_moves(
-            opponent, player, board, move_history, material, check_checks
+        player_in_check, opponent_in_check = Logic.calculate_moves_for_both_players(
+            player, opponent, board, move_history, material, check_checks
         )
 
-        game_status = {'game_finished': False}
+        game_status = {
+            'game_finished': False,
+            f'{player.colour}_in_check': player_in_check,
+            f'{opponent.colour}_in_check': opponent_in_check,
+            'last_move_was_capture': is_capture,
+        }
 
         move_name_suffix = '+' if opponent_in_check else ''
         # check for checkmate
