@@ -284,7 +284,7 @@ async function makeMove(move, pieceType, colour, focusedSquare, dragged) {
 
 let selectedSquareId = null;
 
-function moveEvent(focusedSquare, dragged) {
+function moveEvent(focusedSquare, dragged, dropped = false) {
     if (selectedSquareId === focusedSquare.id) {
         if (dragged) return null;
         selectedSquareId = null;
@@ -334,7 +334,7 @@ function moveEvent(focusedSquare, dragged) {
             document.getElementById(selectedSquareId).classList.remove('selected');
             selectedSquareId = null;
             return move;
-        } else if (toLocPieceInfo !== null && toLocPieceInfo.colour === colour && !dragged) {
+        } else if (toLocPieceInfo !== null && toLocPieceInfo.colour === colour && !dropped) {
             document.getElementById(selectedSquareId).classList.remove('selected');
             selectedSquareId = focusedSquare.id;
             focusedSquare.classList.add('selected');
@@ -347,6 +347,11 @@ function moveEvent(focusedSquare, dragged) {
             document.getElementById(selectedSquareId).classList.remove('selected');
             selectedSquareId = null;
             return move;
+        } else if (toLocPieceInfo !== null && toLocPieceInfo.colour !== colour && !dropped) {
+            document.getElementById(selectedSquareId).classList.remove('selected');
+            selectedSquareId = focusedSquare.id;
+            focusedSquare.classList.add('selected');
+            return null;
         }
     } else {
         const loc = squareIdToLoc(focusedSquare.id);
@@ -397,7 +402,8 @@ createGame().then(() => {
         $('.square').droppable({
             drop: async function (event, ui) {
                 const dragged = true;
-                moveEvent(this, dragged);
+                const dropped = true;
+                moveEvent(this, dragged, dropped);
                 
                 // if (move === null) {
                 //     ui.draggable.animate({
