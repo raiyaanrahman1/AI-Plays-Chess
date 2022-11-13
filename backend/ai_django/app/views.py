@@ -46,7 +46,8 @@ def create_game(request):
         'board': game.get_board_repr(),
         'legal_moves': game.get_all_legal_moves(),
         'material': game.material,
-        'move_history': [str(move) for move in game.move_history]
+        'move_history': [str(move) for move in game.move_history],
+        'game_status': game.game_status
     }
     return JsonResponse(response)
 
@@ -89,11 +90,9 @@ def submit_move(request):
         'board': game.get_board_repr(),
         'legal_moves': game.get_all_legal_moves(),
         'material': game.material,
-        'move_history': [str(move) for move in game.move_history]
+        'move_history': [str(move) for move in game.move_history],
+        'game_status': game.game_status
     }
-    response['finished'] = game.game_status['game_finished']
-    if 'game_result_message' in game.game_status:
-        response['game_result_message'] = game.game_status['game_result_message']
     return JsonResponse(response)
 
 
