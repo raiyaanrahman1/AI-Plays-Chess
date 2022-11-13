@@ -318,15 +318,28 @@ class Logic:
         return True
 
     @staticmethod
+    def get_board_from_pieces(player_pieces, opponent_pieces):
+        board = [[None for _ in range(8)] for _ in range(8)]
+
+        def set_piece_on_board(piece):
+            board[piece.row][piece.col] = piece
+
+        for pieces in (player_pieces, opponent_pieces):
+            for piece_type in (KNIGHTS, BISHOPS, ROOKS, QUEENS, PAWNS):
+                for piece in pieces[piece_type].values():
+                    set_piece_on_board(piece)
+            set_piece_on_board(pieces[KING])
+
+        return board
+
+    @staticmethod
     def in_check_after_move(board, move_history, material, player, opponent, move) -> bool:
         from_loc = move.from_loc
         to_loc = move.to_loc
 
-        temp_board = deepcopy(board)
-        # TODO: might want to build temp player pieces from board
-        # so that they reference the same objects
         temp_player = deepcopy(player)
         temp_opponent = deepcopy(opponent)
+        temp_board = Logic.get_board_from_pieces(temp_player.pieces, temp_opponent.pieces)
 
         Logic.make_move(
             temp_board,
@@ -334,7 +347,7 @@ class Logic:
             temp_opponent,
             move_history,
             deepcopy(material),
-            Move(from_loc, to_loc, board, move.special_move),
+            Move(from_loc, to_loc, temp_board, move.special_move),
             False
         )
 
@@ -382,8 +395,8 @@ class Logic:
         def validate_in_dir(x_dir, y_dir):
             dist = 1
             found_piece = False
-            while in_bounds((loc := (king_row + x_dir * dist, king_col + y_dir * dist))):
-                board_loc = board[loc[1]][loc[0]]
+            while in_bounds((loc := (king_row + y_dir * dist, king_col + x_dir * dist))):
+                board_loc = board[loc[0]][loc[1]]
                 if not found_piece and board_loc is not None and board_loc.colour != player.colour:
                     return
                 elif found_piece and board_loc is not None and board_loc.colour == player.colour:
@@ -445,7 +458,7 @@ class Logic:
             if (
                 board_at_loc is not None
                 and board_at_loc.colour != player.colour
-                and board_at_loc.get_type == PAWNS
+                and board_at_loc.get_type() == PAWNS
             ):
                 return True
 
