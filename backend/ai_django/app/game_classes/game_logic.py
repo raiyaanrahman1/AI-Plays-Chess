@@ -175,6 +175,12 @@ class Logic:
             board[from_loc[0]][from_loc[1]] = None
             board[to_loc[0]][to_loc[1]] = new_piece
 
+        if captured_piece is not None and captured_piece.get_type() == ROOKS:
+            if captured_piece.id == 0:
+                opponent.pieces[KING].long_castle_rights = False
+            elif captured_piece.id == 1:
+                opponent.pieces[KING].short_castle_rights = False
+
         # update move history
         move.move_num = len(move_history)
         move_history.append(move)
@@ -410,7 +416,19 @@ class Logic:
                     piece = board_loc
                     valid_moves = []
                 elif found_piece and board_loc is None:
-                    valid_moves.append(loc)
+                    if (
+                        piece.get_type() == PAWNS
+                        and loc[0] == piece.loc[0] + 1 * player.direction
+                        and loc[1] == piece.loc[1] - 1
+                    ):
+                        valid_moves.append(Move(piece.loc, loc, board, ENPASSANT_LEFT))
+                    elif (
+                        piece.get_type() == PAWNS
+                        and loc[0] == piece.loc[0] + 1 * player.direction
+                        and loc[1] == piece.loc[1] + 1
+                    ):
+                        valid_moves.append(Move(piece.loc, loc, board, ENPASSANT_RIGHT))
+                    valid_moves.append(Move(piece.loc, loc, board))
                 elif found_piece and board_loc is not None and board_loc.colour != player.colour:
                     piece_type = board_loc.get_type()
                     if (
@@ -418,9 +436,9 @@ class Logic:
                         or ((x_dir == 0 or y_dir == 0) and piece_type == ROOKS)
                         or (x_dir != 0 and y_dir != 0 and piece_type == BISHOPS)
                     ):
-                        valid_moves.append(loc)
+                        valid_moves.append(Move(piece.loc, loc, board))
                         piece.legal_moves = list(filter(
-                            lambda move_loc: move_loc in valid_moves,
+                            lambda move: move in valid_moves,
                             piece.legal_moves
                         ))
                 dist += 1
