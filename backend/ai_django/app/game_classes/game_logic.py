@@ -185,7 +185,7 @@ class Logic:
         if is_capture and captured_piece.get_type() != KING:
             material[player.colour][captured_piece.get_type()] += 1
         if promotion_piece is not None:
-            material[player.colour][promotion_piece.get_type()] += 1
+            material[player.colour][new_piece.get_type()] += 1
             material[opponent.colour][PAWNS] += 1
 
         # update legal moves
