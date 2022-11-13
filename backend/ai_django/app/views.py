@@ -47,7 +47,7 @@ def create_game(request):
         'legal_moves': game.get_all_legal_moves(),
         'material': game.material,
         'move_history': [str(move) for move in game.move_history],
-        'game_status': game.game_status
+        'game_status': game.game_status,
     }
     return JsonResponse(response)
 
@@ -91,7 +91,7 @@ def submit_move(request):
         'legal_moves': game.get_all_legal_moves(),
         'material': game.material,
         'move_history': [str(move) for move in game.move_history],
-        'game_status': game.game_status
+        'game_status': game.game_status,
     }
     return JsonResponse(response)
 
