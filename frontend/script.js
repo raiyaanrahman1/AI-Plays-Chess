@@ -284,7 +284,7 @@ async function makeMove(move, pieceType, colour, focusedSquare, dragged) {
 
 let selectedSquareId = null;
 
-async function moveEvent(focusedSquare, dragged) {
+function moveEvent(focusedSquare, dragged) {
     if (selectedSquareId === focusedSquare.id) {
         if (dragged) return null;
         selectedSquareId = null;
@@ -397,7 +397,7 @@ createGame().then(() => {
         $('.square').droppable({
             drop: async function (event, ui) {
                 const dragged = true;
-                const move = await moveEvent(this, dragged);
+                moveEvent(this, dragged);
                 
                 // if (move === null) {
                 //     ui.draggable.animate({
