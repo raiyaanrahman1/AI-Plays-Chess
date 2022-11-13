@@ -7,6 +7,7 @@ let legalMoves = {};
 let boardData = [];
 let material = {};
 let moveHistory = [];
+let gameStatus = {};
 
 const SQUARE_LEN = parseInt(
     getComputedStyle(document.body).getPropertyValue('--square-len')
@@ -51,7 +52,7 @@ function updateBoard(board) {
             const pieceWrapper = document.createElement('div');
             const pieceEl = document.createElement('img');
             const pieceType = pieceLetterToPiece[piece.charAt(1)]
-            pieceEl.src = `assets/${letterToColour(piece.charAt(0))}_${pieceType}.png`;
+            pieceEl.src = `assets/pieces/${letterToColour(piece.charAt(0))}_${pieceType}.png`;
             pieceEl.classList.add('piece');
             if (pieceType === 'pawn') {
                 pieceEl.style.marginLeft = '-3px';
@@ -60,6 +61,15 @@ function updateBoard(board) {
                 pieceEl.style.marginLeft = '-2px';
             }
             pieceWrapper.classList.add('piece-wrapper');
+
+            if (piece === 'WK' && gameStatus.white_in_check) {
+                $(pieceWrapper).addClass('check');
+            } else if (piece === 'BK' && gameStatus.black_in_check) {
+                $(pieceWrapper).addClass('check');
+            } else if ((piece === 'WK' || piece === 'BK') && $(pieceWrapper).hasClass('check')) {
+                $(pieceWrapper).removeClass('check');
+            } 
+
             pieceWrapper.append(pieceEl);
             squares[i][j].append(pieceWrapper);
         })
@@ -72,7 +82,8 @@ function updateGameState(data) {
     legalMoves = data.legal_moves;
     material = data.material;
     moveHistory = data.move_history;
-    console.log(boardData, legalMoves);
+    gameStatus = data.game_status;
+    console.log(boardData, legalMoves, gameStatus);
 }
 
 async function createGame() {
@@ -85,8 +96,8 @@ async function createGame() {
         });
         if (!res.ok) throw Error(res.statusText);
         const data = await res.json();
-        updateBoard(data.board);
         updateGameState(data);
+        updateBoard(data.board);
     } catch (err) {
         console.log(err);
     }
@@ -106,8 +117,18 @@ async function submitMove({from_loc, to_loc, special_move}) {
         });
         if (!res.ok) throw Error(res.statusText);
         const data = await res.json();
-        updateBoard(data.board);
         updateGameState(data);
+        updateBoard(data.board);
+        
+        if (gameStatus.last_move_was_capture) {
+            new Audio('assets/sounds/Capture.mp3').play();
+        } else {
+            new Audio('assets/sounds/StandardMove.mp3').play();
+        }
+
+        if (gameStatus.game_finished) {
+            new Audio('assets/sounds/GenericNotify.mp3').play();
+        }
     } catch (err) {
         console.log(err);
     }
@@ -254,7 +275,7 @@ function getPromotionPiece(loc, colour) {
                 $('#board').removeClass('disable-pointer-events-for-promotion');
                 resolve(`promote:${pieceType}`);
             });
-            const $piece = $("<img>", {"class": "piece", "src": `assets/${colour}_${pieceName}.png`});
+            const $piece = $("<img>", {"class": "piece", "src": `assets/pieces/${colour}_${pieceName}.png`});
             $ppieceWrapper.append($piece);
             $square.append($ppieceWrapper);
             $promotionWrapper.append($square);

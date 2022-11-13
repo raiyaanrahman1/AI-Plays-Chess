@@ -94,3 +94,7 @@ body {
 #board.disable-pointer-events-for-promotion .promotion-piece-square * {
     pointer-events: auto;
 }
+
+.check {
+    background: radial-gradient(ellipse at center, red 0%, #e70000 25%, rgba(169,0,0,0) 89%, rgba(158,0,0,0) 100%);
+}
