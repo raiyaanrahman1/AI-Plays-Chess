@@ -72,3 +72,25 @@ body {
 .dark-square.selected {
     background-color: #bbca43;
 }
+
+.promotion-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.promotion-piece-square {
+    background-color: white;
+    border: 1px solid black;
+    z-index: 2;
+}
+
+#board.disable-pointer-events-for-promotion * {
+    pointer-events: none;
+}
+
+#board.disable-pointer-events-for-promotion .promotion-piece-square * {
+    pointer-events: auto;
+}

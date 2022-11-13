@@ -232,15 +232,49 @@ function animateMove(move, pieceType, colour, focusedSquare, dragged) {
         }
     }
 
-    // TODO: need a special case if the player dragged the king onto the rook
-    // Then, first set the css for the king to be exactly on the rooks square
-    // Then animate the king to the correct position
-
     return promises;
+}
+
+function getPromotionPiece(loc, colour) {
+    const $promotionWrapper = $("<div>", {"class": "promotion-wrapper"});
+    const pieceInfo = [['queen', 'Q'], ['rook', 'R'], ['bishop', 'B'], ['knight', 'N']];
+    const promotionWrapperLoc = [loc[0], loc[1]];
+    if (colour === 'black') {
+        promotionWrapperLoc[0] += 3;
+        pieceInfo.reverse();
+    }
+    return new Promise((resolve) => {
+        $('#board').addClass('disable-pointer-events-for-promotion');
+        pieceInfo.forEach(([pieceName, pieceType]) => {
+            const $square = $("<div>", {"class": "square promotion-piece-square"});
+            const $ppieceWrapper = $("<div>", {"class": "piece-wrapper promotion"});
+            $ppieceWrapper.click(function () {
+                $promotionWrapper.remove();
+                promotionSquare.style.position = 'static';
+                $('#board').removeClass('disable-pointer-events-for-promotion');
+                resolve(`promote:${pieceType}`);
+            });
+            const $piece = $("<img>", {"class": "piece", "src": `assets/${colour}_${pieceName}.png`});
+            $ppieceWrapper.append($piece);
+            $square.append($ppieceWrapper);
+            $promotionWrapper.append($square);
+        });
+        console.log(promotionWrapperLoc);
+        const promotionSquare = document.getElementById(promotionWrapperLoc.join(','));
+        promotionSquare.style.position = 'relative';
+        $(promotionSquare).append($promotionWrapper[0]);
+    })
 }
 
 async function makeMove(move, pieceType, colour, focusedSquare, dragged) {
     let promises = [];
+    if (pieceType === 'P') {
+        const backrank = colour === 'white' ? 7 : 0;
+        if (move.to_loc[0] === backrank) {
+            move.special_move = await getPromotionPiece(move.to_loc, colour);
+        }
+
+    }
     if (['O-O', 'O-O-O'].includes(move.special_move) || !dragged) {
         promises = animateMove(move, pieceType, colour, focusedSquare, dragged);
     }
