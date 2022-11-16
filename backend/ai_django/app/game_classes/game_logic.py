@@ -291,6 +291,7 @@ class Logic:
 
         boards = {get_board_string(board): 1}
 
+        iterations = 0
         for i in range(len(move_history) - 1, max(-1, len(move_history) - 100), -1):
             if move_history[i].board_str_before_move in boards:
                 boards[move_history[i].board_str_before_move] += 1
@@ -302,8 +303,9 @@ class Logic:
             assert move_history[i].is_capture is not None
             if move_history[i].piece_type == PAWNS or move_history[i].is_capture:
                 return (False, None)
+            iterations += 1
 
-        return (True, '50-move rule')
+        return (True, '50-move rule') if iterations >= 50 else (False, None)
 
     # using lichess / FIDE rules, i.e. it's only a draw if there's absolutely no mate possible
     # (it's not a draw if there is a possible mate even if there is no forced mate)
