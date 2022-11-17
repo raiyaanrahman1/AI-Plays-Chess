@@ -213,7 +213,7 @@ class Logic:
             material[player.colour][new_piece.get_type()] += 1
             material[opponent.colour][PAWNS] += 1
 
-        move_name = Logic.get_move_name(move, is_capture, player.pieces)
+        move_name = Logic.get_move_name(move, is_capture, player.pieces, promotion_piece)
 
         # update legal moves
         player_in_check, opponent_in_check = Logic.calculate_moves_for_both_players(
@@ -249,7 +249,7 @@ class Logic:
         return game_status
 
     @staticmethod
-    def get_move_name(move, is_capture, player_pieces) -> str:
+    def get_move_name(move, is_capture, player_pieces, promotion_piece) -> str:
         if move.special_move in (SHORT_CASTLE, LONG_CASTLE):
             return move.special_move
 
@@ -284,8 +284,15 @@ class Logic:
 
         include_piece = '' if piece_type == PAWNS else piece_type
         include_capture = 'x' if is_capture else ''
+        include_promotion = f'={promotion_piece}' if promotion_piece is not None else ''
         to_loc_chess_not = loc_to_chess_notation(move.to_loc)
-        return f'{include_piece}{include_from_loc}{include_capture}{to_loc_chess_not}'
+        return '{}{}{}{}{}'.format(
+            include_piece,
+            include_from_loc,
+            include_capture,
+            to_loc_chess_not,
+            include_promotion
+        )
 
     # checks 3-fold repetition, 50 move rule, insufficient mating material
     # should not be called before a move is made
