@@ -83,7 +83,7 @@ function updateGameState(data) {
     material = data.material;
     moveHistory = data.move_history;
     gameStatus = data.game_status;
-    console.log(boardData, legalMoves, gameStatus);
+    console.log(boardData, legalMoves, gameStatus, moveHistory);
 }
 
 async function createGame() {

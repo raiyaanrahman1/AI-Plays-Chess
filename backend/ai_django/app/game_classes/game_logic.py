@@ -213,6 +213,8 @@ class Logic:
             material[player.colour][new_piece.get_type()] += 1
             material[opponent.colour][PAWNS] += 1
 
+        move_name = Logic.get_move_name(move, is_capture, player.pieces)
+
         # update legal moves
         player_in_check, opponent_in_check = Logic.calculate_moves_for_both_players(
             player, opponent, board, move_history, material, check_checks
@@ -234,6 +236,8 @@ class Logic:
             game_status['game_result_message'] = f'{player.colour} won by checkmate'
             move_name_suffix = '#'
 
+        move.move_name = move_name + move_name_suffix
+
         # check for draw
         is_draw, draw_by = Logic.is_draw(board, player, opponent, move_history, opponent_in_check)
         if is_draw:
@@ -242,11 +246,13 @@ class Logic:
             game_status['draw_by'] = draw_by
             game_status['game_result_message'] = f'game drawn by {draw_by}'
 
-        move.move_name = Logic.get_move_name(move, is_capture, move_name_suffix, player.pieces)
         return game_status
 
     @staticmethod
-    def get_move_name(move, is_capture, suffix, player_pieces) -> str:
+    def get_move_name(move, is_capture, player_pieces) -> str:
+        if move.special_move in (SHORT_CASTLE, LONG_CASTLE):
+            return move.special_move
+
         piece_type = move.piece_type
 
         extra_potential_from_locs = []
@@ -271,12 +277,15 @@ class Logic:
         if same_rank_exists:
             include_from_loc += index_to_letter(move.from_loc[1])
         if same_file_exists:
-            include_from_loc += move.from_loc[0] + 1
+            include_from_loc += str(move.from_loc[0] + 1)
+
+        if include_from_loc == '' and piece_type == PAWNS and is_capture:
+            include_from_loc = index_to_letter(move.from_loc[1])
 
         include_piece = '' if piece_type == PAWNS else piece_type
         include_capture = 'x' if is_capture else ''
         to_loc_chess_not = loc_to_chess_notation(move.to_loc)
-        return f'{include_piece}{include_from_loc}{include_capture}{to_loc_chess_not}{suffix}'
+        return f'{include_piece}{include_from_loc}{include_capture}{to_loc_chess_not}'
 
     # checks 3-fold repetition, 50 move rule, insufficient mating material
     # should not be called before a move is made
