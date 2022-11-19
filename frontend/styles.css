@@ -16,15 +16,31 @@ body {
     height: 100vh;
 }
 
-#move-history {
+#move-history-container {
     width: 300px;
     /* border: 1px solid white; */
-    height: calc(var(--square-len) * 8)
+    height: calc(var(--square-len) * 8);
+    display: flex;
+    flex-direction: column;
 }
 
-#move-history h2 {
+#move-history-container h2 {
     text-align: center;
     text-decoration: underline;
+}
+
+#move-history {
+    flex-grow: 1;
+    overflow-y: scroll;
+}
+
+.move {
+    margin-left: 80px;
+}
+
+.ply {
+    display: inline-block;
+    width: 50%;
 }
 
 .square {

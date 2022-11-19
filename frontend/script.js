@@ -103,6 +103,24 @@ async function createGame() {
     }
 }
 
+function updateMoveHistory() {
+    const moveHistoryEl = $('#move-history');
+
+    if (moveHistory.length % 2 !== 0) {
+        const moveEl = $('<div>', {class: 'move'});
+        const plyEl = $('<div>', {class:'ply'}).text(`${(moveHistory.length + 1) / 2}. ${moveHistory[moveHistory.length - 1]}`);
+        moveEl.append(plyEl);
+        moveHistoryEl.append(moveEl);
+    } else {
+        const moveEl = moveHistoryEl.children().last();
+        console.log(moveEl);
+        const plyEl = $('<div>', {class:'ply'}).text(moveHistory[moveHistory.length - 1]);
+        moveEl.append(plyEl);
+        moveHistoryEl.append(moveEl);
+    }
+    moveHistoryEl[0].scrollTop = moveHistoryEl[0].scrollHeight;
+}
+
 async function submitMove({from_loc, to_loc, special_move}) {
     try {
         const res = await fetch(apiUrl + 'submit-move?' + new URLSearchParams({
@@ -129,6 +147,8 @@ async function submitMove({from_loc, to_loc, special_move}) {
         if (gameStatus.game_finished) {
             new Audio('assets/sounds/GenericNotify.mp3').play();
         }
+
+        updateMoveHistory();
     } catch (err) {
         console.log(err);
     }
