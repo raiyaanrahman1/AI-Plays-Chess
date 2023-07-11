@@ -1,5 +1,6 @@
 from django.test import TestCase
 import sys
+import os
 
 
 def coloured(r, g, b, text):
@@ -57,3 +58,18 @@ class GameTests(TestCase):
         game.make_move((1, 4), (3, 4))
         self.print(game)
         self.print(game.info())
+
+    def test_game_via_pgn(self):
+        from .game_classes.game import Game
+        games = []
+        with open(f'{os.path.dirname(__file__)}/game_data/lichess_db_standard_rated_2013-01.pgn') as file:
+            for line in file:
+                if not line.startswith('[') and len(line.strip()) != 0:
+                    games.append(line)
+
+        games = [games[0]]
+        for game_str in games:
+            game_moves = [move for move in game_str.split() if '.' not in move and '-' not in move]
+            game = Game()
+            game.calculate_legal_moves()
+            print(game)
