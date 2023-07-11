@@ -1,4 +1,8 @@
 from .utilities import loc_to_chess_notation, get_board_string
+from .constants import (
+    ENPASSANT_LEFT,
+    ENPASSANT_RIGHT,
+)
 
 
 class Move:
@@ -8,7 +12,6 @@ class Move:
         self.special_move = special_move
         self.move_name = None
         self.board_str_before_move = get_board_string(board_before_move)
-        self.is_capture = None
         self.move_num = -1  # index of move history - set in Logic.make_move()
 
         if board_before_move[from_loc[0]][from_loc[1]] is None:
@@ -20,6 +23,10 @@ class Move:
         self.piece_type = board_before_move[from_loc[0]][from_loc[1]].get_type()
         self.piece_id = board_before_move[from_loc[0]][from_loc[1]].id
         self.colour = board_before_move[from_loc[0]][from_loc[1]].colour
+
+        captured_piece = self.get_captured_piece(board_before_move)
+        self.is_capture = captured_piece is not None
+        # self.temporary_move_name = Logic.get_move_name(self, self.is_capture, )
 
     def __str__(self) -> str:
         if self.move_name is not None:
@@ -44,3 +51,20 @@ class Move:
             and self.to_loc == other.to_loc
             and self.special_move == other.special_move
         )
+
+    def get_captured_piece(self, board):
+        from_loc = self.from_loc
+        to_loc = self.to_loc
+
+        if self.special_move is None or self.special_move.startswith('promote'):
+            # if capture, update opponents pieces
+            if board[to_loc[0]][to_loc[1]] is not None:
+                return board[to_loc[0]][to_loc[1]]
+
+        elif self.special_move == ENPASSANT_LEFT:
+            return board[from_loc[0]][from_loc[1] - 1]
+
+        elif self.special_move == ENPASSANT_RIGHT:
+            return board[from_loc[0]][from_loc[1] + 1]
+
+        return None

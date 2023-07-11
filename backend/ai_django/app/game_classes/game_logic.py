@@ -87,7 +87,7 @@ class Logic:
         from_loc = move.from_loc
         to_loc = move.to_loc
         piece = board[from_loc[0]][from_loc[1]]
-        captured_piece = None
+        captured_piece = move.get_captured_piece(board)
         promotion_piece = None
 
         # error checking
@@ -114,68 +114,21 @@ class Logic:
             elif piece.id == 1:
                 player.pieces[KING].short_castle_rights = False
 
-        if move.special_move is None:
-            # if capture, update opponents pieces
-            if board[to_loc[0]][to_loc[1]] is not None:
-                assert board[to_loc[0]][to_loc[1]].colour != player.colour
-                captured_piece = board[to_loc[0]][to_loc[1]]
-                del opponent.pieces[captured_piece.get_type()][captured_piece.id]
+        if captured_piece is not None:
+            assert captured_piece.colour != player.colour
+            del opponent.pieces[captured_piece.get_type()][captured_piece.id]
 
-            # update piece location
-            piece.set_loc(to_loc)
+            if move.special_move in (ENPASSANT_LEFT, ENPASSANT_RIGHT):
+                board[captured_piece.row][captured_piece.col] = None
 
-            # update board
-            board[from_loc[0]][from_loc[1]] = None
-            board[to_loc[0]][to_loc[1]] = piece
+        # update piece location
+        piece.set_loc(to_loc)
 
-        elif move.special_move == SHORT_CASTLE:
-            piece.set_loc(to_loc)
-            player.pieces[ROOKS][1].set_loc((to_loc[0], to_loc[1] - 1))
+        # update board
+        board[from_loc[0]][from_loc[1]] = None
+        board[to_loc[0]][to_loc[1]] = piece
 
-            board[from_loc[0]][from_loc[1]] = None
-            board[to_loc[0]][to_loc[1] + 1] = None
-            board[to_loc[0]][to_loc[1]] = piece
-            board[to_loc[0]][to_loc[1] - 1] = player.pieces[ROOKS][1]
-
-        elif move.special_move == LONG_CASTLE:
-            piece.set_loc(to_loc)
-            player.pieces[ROOKS][0].set_loc((to_loc[0], to_loc[1] + 1))
-
-            board[from_loc[0]][from_loc[1]] = None
-            board[to_loc[0]][to_loc[1] - 2] = None
-            board[to_loc[0]][to_loc[1]] = piece
-            board[to_loc[0]][to_loc[1] + 1] = player.pieces[ROOKS][0]
-
-        elif move.special_move == ENPASSANT_LEFT:
-            captured_piece = board[from_loc[0]][from_loc[1] - 1]
-            del opponent.pieces[PAWNS][captured_piece.id]
-
-            piece.set_loc(to_loc)
-
-            # update board
-            board[from_loc[0]][from_loc[1]] = None
-            board[from_loc[0]][from_loc[1] - 1] = None
-            board[to_loc[0]][to_loc[1]] = piece
-
-        elif move.special_move == ENPASSANT_RIGHT:
-            captured_piece = board[from_loc[0]][from_loc[1] + 1]
-            del opponent.pieces[PAWNS][captured_piece.id]
-
-            piece.set_loc(to_loc)
-
-            # update board
-            board[from_loc[0]][from_loc[1]] = None
-            board[from_loc[0]][from_loc[1] + 1] = None
-            board[to_loc[0]][to_loc[1]] = piece
-
-        elif move.special_move.startswith('promote'):
-            # if capture, update opponents pieces
-            if board[to_loc[0]][to_loc[1]] is not None:
-                assert board[to_loc[0]][to_loc[1]].colour != player.colour
-                captured_piece = board[to_loc[0]][to_loc[1]]
-                del opponent.pieces[captured_piece.get_type()][captured_piece.id]
-
-            # delete pawn
+        if move.special_move is not None and move.special_move.startswith('promote'):
             del player.pieces[PAWNS][piece.id]
 
             promotion_piece = move.special_move.split(':')[1]
@@ -191,8 +144,19 @@ class Logic:
             player.pieces[promotion_piece][piece_id] = new_piece
 
             # update board
-            board[from_loc[0]][from_loc[1]] = None
             board[to_loc[0]][to_loc[1]] = new_piece
+
+        elif move.special_move == SHORT_CASTLE:
+            player.pieces[ROOKS][1].set_loc((to_loc[0], to_loc[1] - 1))
+
+            board[to_loc[0]][to_loc[1] + 1] = None
+            board[to_loc[0]][to_loc[1] - 1] = player.pieces[ROOKS][1]
+
+        elif move.special_move == LONG_CASTLE:
+            player.pieces[ROOKS][0].set_loc((to_loc[0], to_loc[1] + 1))
+
+            board[to_loc[0]][to_loc[1] - 2] = None
+            board[to_loc[0]][to_loc[1] + 1] = player.pieces[ROOKS][0]
 
         if captured_piece is not None and captured_piece.get_type() == ROOKS:
             if captured_piece.id == 0:
@@ -206,7 +170,6 @@ class Logic:
 
         # update material
         is_capture = captured_piece is not None
-        move.is_capture = is_capture
         if is_capture and captured_piece.get_type() != KING:
             material[player.colour][captured_piece.get_type()] += 1
         if promotion_piece is not None:
