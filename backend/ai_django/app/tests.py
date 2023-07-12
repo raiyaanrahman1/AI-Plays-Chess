@@ -1,6 +1,9 @@
 from django.test import TestCase
 import sys
 import os
+from .game_classes import settings
+
+settings.init()
 
 
 def coloured(r, g, b, text):
@@ -61,6 +64,8 @@ class GameTests(TestCase):
 
     def test_game_via_pgn(self):
         from .game_classes.game import Game
+        settings.set_debug(True)
+
         games = []
         with open(f'{os.path.dirname(__file__)}/game_data/lichess_db_standard_rated_2013-01.pgn') as file:
             for line in file:

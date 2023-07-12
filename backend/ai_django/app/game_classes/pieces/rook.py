@@ -14,7 +14,7 @@ class Rook(Piece):
     def __str__(self) -> str:
         return '♖' if self.colour == 'white' else '♜'
 
-    def calculate_moves_in_direction(self, direction, sign, board):
+    def calculate_moves_in_direction(self, direction, sign, board, player_pieces):
         x = self.row
         y = self.col
         moves = []
@@ -27,17 +27,17 @@ class Rook(Piece):
 
         x, y = move_one_space(x, y)
         while in_bounds((x, y)) and board[x][y] is None:
-            moves.append(Move(self.loc, (x, y), board))
+            moves.append(Move(self.loc, (x, y), board, None, player_pieces))
             x, y = move_one_space(x, y)
 
         if in_bounds((x, y)) and board[x][y].colour != self.colour:
-            moves.append(Move(self.loc, (x, y), board))
+            moves.append(Move(self.loc, (x, y), board, None, player_pieces))
 
         return moves
 
-    def calculate_moves(self, board, move_history) -> None:
+    def calculate_moves(self, board, move_history, player_pieces) -> None:
         self.legal_moves = []
 
         for direction in ('x', 'y'):
             for sign in (1, -1):
-                self.legal_moves += self.calculate_moves_in_direction(direction, sign, board)
+                self.legal_moves += self.calculate_moves_in_direction(direction, sign, board, player_pieces)

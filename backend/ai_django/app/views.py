@@ -2,11 +2,13 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from .game_classes.game import Game
+from .game_classes import settings
 from .game_classes.game_errors import GameError
 from .game_classes.constants import SPECIAL_MOVES
 
 
 game = None
+settings.init()
 
 
 def get_required_tuple_param(request, param_name, required_len=2):

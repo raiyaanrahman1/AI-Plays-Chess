@@ -1,12 +1,24 @@
-from .utilities import loc_to_chess_notation, get_board_string
+from .utilities import loc_to_chess_notation, get_board_string, index_to_letter
 from .constants import (
+    SHORT_CASTLE,
+    LONG_CASTLE,
     ENPASSANT_LEFT,
     ENPASSANT_RIGHT,
 )
+from .constants import PIECE_TYPES
+from . import settings
+PAWNS, KNIGHTS, BISHOPS, ROOKS, QUEENS = PIECE_TYPES
 
 
 class Move:
-    def __init__(self, from_loc, to_loc, board_before_move, special_move=None):
+    def __init__(
+            self,
+            from_loc,
+            to_loc,
+            board_before_move,
+            special_move=None,
+            player_pieces=None
+    ):
         self.from_loc = from_loc
         self.to_loc = to_loc
         self.special_move = special_move
@@ -26,7 +38,13 @@ class Move:
 
         captured_piece = self.get_captured_piece(board_before_move)
         self.is_capture = captured_piece is not None
-        # self.temporary_move_name = Logic.get_move_name(self, self.is_capture, )
+
+        promotion_piece = None
+        if special_move is not None and special_move.startswith('promote'):
+            promotion_piece = special_move.split(':')[1]
+
+        if settings.debug and player_pieces is not None:
+            self.move_name = self.get_basic_move_name(self.is_capture, player_pieces, promotion_piece)
 
     def __str__(self) -> str:
         if self.move_name is not None:
@@ -68,3 +86,49 @@ class Move:
             return board[from_loc[0]][from_loc[1] + 1]
 
         return None
+
+    # returns the move name without any suffixes like + or #
+    def get_basic_move_name(self, is_capture, player_pieces, promotion_piece) -> str:
+        if self.special_move in (SHORT_CASTLE, LONG_CASTLE):
+            return self.special_move
+
+        piece_type = self.piece_type
+
+        extra_potential_from_locs = []
+        if piece_type in (KNIGHTS, BISHOPS, ROOKS, QUEENS):
+            for piece in player_pieces[piece_type].values():
+                if (
+                    piece.id != self.piece_id
+                    and any(other_move.to_loc == self.to_loc for other_move in piece.legal_moves)
+                ):
+                    extra_potential_from_locs.append(piece.loc)
+        same_file_exists = False
+        same_rank_exists = False
+        for loc in extra_potential_from_locs:
+            if loc[0] == self.from_loc[0]:
+                same_rank_exists = True
+            if loc[1] == self.from_loc[1]:
+                same_file_exists = True
+
+        include_from_loc = ''
+        if len(extra_potential_from_locs) > 0 and not same_file_exists and not same_rank_exists:
+            include_from_loc += index_to_letter(self.from_loc[1])
+        if same_rank_exists:
+            include_from_loc += index_to_letter(self.from_loc[1])
+        if same_file_exists:
+            include_from_loc += str(self.from_loc[0] + 1)
+
+        if include_from_loc == '' and piece_type == PAWNS and is_capture:
+            include_from_loc = index_to_letter(self.from_loc[1])
+
+        include_piece = '' if piece_type == PAWNS else piece_type
+        include_capture = 'x' if is_capture else ''
+        include_promotion = f'={promotion_piece}' if promotion_piece is not None else ''
+        to_loc_chess_not = loc_to_chess_notation(self.to_loc)
+        return '{}{}{}{}{}'.format(
+            include_piece,
+            include_from_loc,
+            include_capture,
+            to_loc_chess_not,
+            include_promotion
+        )

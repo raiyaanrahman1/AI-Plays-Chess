@@ -20,7 +20,7 @@ class King(Piece):
     def __str__(self) -> str:
         return '♔' if self.colour == 'white' else '♚'
 
-    def calculate_moves(self, board, move_history) -> None:
+    def calculate_moves(self, board, move_history, player_pieces) -> None:
         up = (self.row + 1, self.col)
         down = (self.row - 1, self.col)
         left = (self.row, self.col - 1)
@@ -45,7 +45,7 @@ class King(Piece):
                         board[loc[0]][loc[1]].colour != self.colour
                     )
             ):
-                self.legal_moves.append(Move(self.loc, loc, board))
+                self.legal_moves.append(Move(self.loc, loc, board, None, player_pieces))
 
         # Castling
         two_left = (self.row, self.col - 2)
@@ -56,11 +56,11 @@ class King(Piece):
             and board[right[0]][right[1]] is None
             and board[two_right[0]][two_right[1]] is None
         ):
-            self.legal_moves.append(Move(self.loc, two_right, board, SHORT_CASTLE))
+            self.legal_moves.append(Move(self.loc, two_right, board, SHORT_CASTLE, player_pieces))
         if (
             self.long_castle_rights
             and board[left[0]][left[1]] is None
             and board[two_left[0]][two_left[1]] is None
             and board[three_left[0]][three_left[1]] is None
         ):
-            self.legal_moves.append(Move(self.loc, two_left, board, LONG_CASTLE))
+            self.legal_moves.append(Move(self.loc, two_left, board, LONG_CASTLE, player_pieces))

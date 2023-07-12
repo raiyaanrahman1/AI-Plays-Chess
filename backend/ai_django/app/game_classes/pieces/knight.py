@@ -14,7 +14,7 @@ class Knight(Piece):
     def __str__(self) -> str:
         return '♘' if self.colour == 'white' else '♞'
 
-    def calculate_moves(self, board, move_history) -> None:
+    def calculate_moves(self, board, move_history, player_pieces) -> None:
         up_two_left = (self.row + 2 * self.direction, self.col - 1)
         up_two_right = (self.row + 2 * self.direction, self.col + 1)
         left_two_up = (self.row + 1 * self.direction, self.col - 2)
@@ -45,4 +45,4 @@ class Knight(Piece):
                         board[loc[0]][loc[1]].colour != self.colour
                     )
             ):
-                self.legal_moves.append(Move(self.loc, loc, board))
+                self.legal_moves.append(Move(self.loc, loc, board, None, player_pieces))

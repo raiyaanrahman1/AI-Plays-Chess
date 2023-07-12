@@ -1,6 +1,6 @@
 from copy import deepcopy
 from .utilities import (
-    in_bounds, index_to_letter, loc_to_chess_notation, colour_of_square, get_board_string
+    in_bounds, colour_of_square, get_board_string
 )
 from .game_errors import (
     InvalidStartPosError,
@@ -32,13 +32,13 @@ class Logic:
     def calculate_moves_for_both_players(
         player, opponent, board, move_history, material, check_checks=True
     ):
-        player.pieces[KING].calculate_moves(board, move_history)
-        opponent.pieces[KING].calculate_moves(board, move_history)
+        player.pieces[KING].calculate_moves(board, move_history, player.pieces)
+        opponent.pieces[KING].calculate_moves(board, move_history, opponent.pieces)
         for piece_type in PIECE_TYPES:
             for piece in player.pieces[piece_type].values():
-                piece.calculate_moves(board, move_history)
+                piece.calculate_moves(board, move_history, player.pieces)
             for piece in opponent.pieces[piece_type].values():
-                piece.calculate_moves(board, move_history)
+                piece.calculate_moves(board, move_history, opponent.pieces)
 
         player_in_check = Logic.calculate_legal_moves(
             player, opponent, board, move_history, material, check_checks
@@ -176,7 +176,7 @@ class Logic:
             material[player.colour][new_piece.get_type()] += 1
             material[opponent.colour][PAWNS] += 1
 
-        move_name = Logic.get_move_name(move, is_capture, player.pieces, promotion_piece)
+        move_name = move.get_basic_move_name(is_capture, player.pieces, promotion_piece)
 
         # update legal moves
         player_in_check, opponent_in_check = Logic.calculate_moves_for_both_players(
@@ -210,52 +210,6 @@ class Logic:
             game_status['game_result_message'] = f'game drawn by {draw_by}'
 
         return game_status
-
-    @staticmethod
-    def get_move_name(move, is_capture, player_pieces, promotion_piece) -> str:
-        if move.special_move in (SHORT_CASTLE, LONG_CASTLE):
-            return move.special_move
-
-        piece_type = move.piece_type
-
-        extra_potential_from_locs = []
-        if piece_type in (KNIGHTS, BISHOPS, ROOKS, QUEENS):
-            for piece in player_pieces[piece_type].values():
-                if (
-                    piece.id != move.piece_id
-                    and any(other_move.to_loc == move.to_loc for other_move in piece.legal_moves)
-                ):
-                    extra_potential_from_locs.append(piece.loc)
-        same_file_exists = False
-        same_rank_exists = False
-        for loc in extra_potential_from_locs:
-            if loc[0] == move.from_loc[0]:
-                same_rank_exists = True
-            if loc[1] == move.from_loc[1]:
-                same_file_exists = True
-
-        include_from_loc = ''
-        if len(extra_potential_from_locs) > 0 and not same_file_exists and not same_rank_exists:
-            include_from_loc += index_to_letter(move.from_loc[1])
-        if same_rank_exists:
-            include_from_loc += index_to_letter(move.from_loc[1])
-        if same_file_exists:
-            include_from_loc += str(move.from_loc[0] + 1)
-
-        if include_from_loc == '' and piece_type == PAWNS and is_capture:
-            include_from_loc = index_to_letter(move.from_loc[1])
-
-        include_piece = '' if piece_type == PAWNS else piece_type
-        include_capture = 'x' if is_capture else ''
-        include_promotion = f'={promotion_piece}' if promotion_piece is not None else ''
-        to_loc_chess_not = loc_to_chess_notation(move.to_loc)
-        return '{}{}{}{}{}'.format(
-            include_piece,
-            include_from_loc,
-            include_capture,
-            to_loc_chess_not,
-            include_promotion
-        )
 
     # checks 3-fold repetition, 50 move rule, insufficient mating material
     # should not be called before a move is made
