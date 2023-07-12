@@ -6,7 +6,6 @@ from .constants import (
     ENPASSANT_RIGHT,
 )
 from .constants import PIECE_TYPES
-from . import settings
 PAWNS, KNIGHTS, BISHOPS, ROOKS, QUEENS = PIECE_TYPES
 
 
@@ -16,8 +15,7 @@ class Move:
             from_loc,
             to_loc,
             board_before_move,
-            special_move=None,
-            player_pieces=None
+            special_move=None
     ):
         self.from_loc = from_loc
         self.to_loc = to_loc
@@ -39,12 +37,9 @@ class Move:
         captured_piece = self.get_captured_piece(board_before_move)
         self.is_capture = captured_piece is not None
 
-        promotion_piece = None
+        self.promotion_piece = None
         if special_move is not None and special_move.startswith('promote'):
-            promotion_piece = special_move.split(':')[1]
-
-        if settings.debug and player_pieces is not None:
-            self.move_name = self.get_basic_move_name(self.is_capture, player_pieces, promotion_piece)
+            self.promotion_piece = special_move.split(':')[1]
 
     def __str__(self) -> str:
         if self.move_name is not None:
@@ -88,7 +83,7 @@ class Move:
         return None
 
     # returns the move name without any suffixes like + or #
-    def get_basic_move_name(self, is_capture, player_pieces, promotion_piece) -> str:
+    def get_basic_move_name(self, player_pieces) -> str:
         if self.special_move in (SHORT_CASTLE, LONG_CASTLE):
             return self.special_move
 
@@ -118,12 +113,12 @@ class Move:
         if same_file_exists:
             include_from_loc += str(self.from_loc[0] + 1)
 
-        if include_from_loc == '' and piece_type == PAWNS and is_capture:
+        if include_from_loc == '' and piece_type == PAWNS and self.is_capture:
             include_from_loc = index_to_letter(self.from_loc[1])
 
         include_piece = '' if piece_type == PAWNS else piece_type
-        include_capture = 'x' if is_capture else ''
-        include_promotion = f'={promotion_piece}' if promotion_piece is not None else ''
+        include_capture = 'x' if self.is_capture else ''
+        include_promotion = f'={self.promotion_piece}' if self.promotion_piece is not None else ''
         to_loc_chess_not = loc_to_chess_notation(self.to_loc)
         return '{}{}{}{}{}'.format(
             include_piece,

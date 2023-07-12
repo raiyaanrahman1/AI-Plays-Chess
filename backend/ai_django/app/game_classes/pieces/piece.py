@@ -27,5 +27,5 @@ class Piece:
         pass
 
     @abstractmethod
-    def calculate_moves(self, board, move_history, player_pieces) -> None:
+    def calculate_moves(self, board, move_history) -> None:
         pass

@@ -10,6 +10,8 @@ from .game_errors import (
     InternalInvalidPlayerError,
     InternalIllegalMoveError
 )
+from typing import List
+from . import settings
 from .pieces.knight import Knight
 from .pieces.bishop import Bishop
 from .pieces.rook import Rook
@@ -32,13 +34,13 @@ class Logic:
     def calculate_moves_for_both_players(
         player, opponent, board, move_history, material, check_checks=True
     ):
-        player.pieces[KING].calculate_moves(board, move_history, player.pieces)
-        opponent.pieces[KING].calculate_moves(board, move_history, opponent.pieces)
+        player.pieces[KING].calculate_moves(board, move_history)
+        opponent.pieces[KING].calculate_moves(board, move_history)
         for piece_type in PIECE_TYPES:
             for piece in player.pieces[piece_type].values():
-                piece.calculate_moves(board, move_history, player.pieces)
+                piece.calculate_moves(board, move_history)
             for piece in opponent.pieces[piece_type].values():
-                piece.calculate_moves(board, move_history, opponent.pieces)
+                piece.calculate_moves(board, move_history)
 
         player_in_check = Logic.calculate_legal_moves(
             player, opponent, board, move_history, material, check_checks
@@ -46,7 +48,26 @@ class Logic:
         opponent_in_check = Logic.calculate_legal_moves(
             opponent, player, board, move_history, material, check_checks
         )
-        return (player_in_check, opponent_in_check)
+
+        result = (player_in_check, opponent_in_check)
+
+        if not settings.debug:
+            return result
+
+        def set_move_names(moves: List[Move], player_pieces):
+            for move in moves:
+                move.move_name = move.get_basic_move_name(player_pieces)
+
+        set_move_names(player.pieces[KING].legal_moves, player.pieces)
+        set_move_names(opponent.pieces[KING].legal_moves, opponent.pieces)
+
+        for piece_type in PIECE_TYPES:
+            for piece in player.pieces[piece_type].values():
+                set_move_names(piece.legal_moves, player.pieces)
+            for piece in opponent.pieces[piece_type].values():
+                set_move_names(piece.legal_moves, opponent.pieces)
+
+        return result
 
     @staticmethod
     def calculate_legal_moves(player, opponent, board, move_history, material, check_checks=True):
@@ -176,7 +197,8 @@ class Logic:
             material[player.colour][new_piece.get_type()] += 1
             material[opponent.colour][PAWNS] += 1
 
-        move_name = move.get_basic_move_name(is_capture, player.pieces, promotion_piece)
+        # TODO: get_basic_move_name is already called in calculate_moves_for_both_players when debug is on
+        move_name = move.get_basic_move_name(player.pieces)
 
         # update legal moves
         player_in_check, opponent_in_check = Logic.calculate_moves_for_both_players(
@@ -357,14 +379,35 @@ class Logic:
         king_row, king_col = player.pieces[KING].loc
 
         def validate_in_dir(x_dir, y_dir):
+            def check_for_enpassent(piece, loc, player, board):
+                if (
+                    piece.get_type() == PAWNS
+                    and loc[0] == piece.loc[0] + 1 * player.direction
+                    and loc[1] == piece.loc[1] - 1
+                ):
+                    return Move(piece.loc, loc, board, ENPASSANT_LEFT)
+                elif (
+                    piece.get_type() == PAWNS
+                    and loc[0] == piece.loc[0] + 1 * player.direction
+                    and loc[1] == piece.loc[1] + 1
+                ):
+                    return Move(piece.loc, loc, board, ENPASSANT_RIGHT)
+                return None
+
             dist = 1
             found_piece = False
+            empty_squares_between_king_and_piece = []
             while in_bounds((loc := (king_row + y_dir * dist, king_col + x_dir * dist))):
                 board_loc = board[loc[0]][loc[1]]
+
                 if not found_piece and board_loc is not None and board_loc.colour != player.colour:
                     return
+
                 elif found_piece and board_loc is not None and board_loc.colour == player.colour:
                     return
+
+                elif not found_piece and board_loc is None:
+                    empty_squares_between_king_and_piece.append((loc[0], loc[1]))
                 elif (
                     not found_piece
                     and board_loc is not None
@@ -373,20 +416,21 @@ class Logic:
                     found_piece = True
                     piece = board_loc
                     valid_moves = []
+                    for empty_loc in empty_squares_between_king_and_piece:
+                        valid_moves.append(Move(piece.loc, empty_loc, board))
+                        enpassent = check_for_enpassent(piece, empty_loc, player, board)
+                        if enpassent:
+                            valid_moves.append(enpassent)
+                    valid_moves = [
+                        Move(piece.loc, empty_loc, board) for empty_loc in empty_squares_between_king_and_piece
+                    ]
+
                 elif found_piece and board_loc is None:
-                    if (
-                        piece.get_type() == PAWNS
-                        and loc[0] == piece.loc[0] + 1 * player.direction
-                        and loc[1] == piece.loc[1] - 1
-                    ):
-                        valid_moves.append(Move(piece.loc, loc, board, ENPASSANT_LEFT))
-                    elif (
-                        piece.get_type() == PAWNS
-                        and loc[0] == piece.loc[0] + 1 * player.direction
-                        and loc[1] == piece.loc[1] + 1
-                    ):
-                        valid_moves.append(Move(piece.loc, loc, board, ENPASSANT_RIGHT))
                     valid_moves.append(Move(piece.loc, loc, board))
+                    enpassent = check_for_enpassent(piece, loc, player, board)
+                    if enpassent:
+                        valid_moves.append(enpassent)
+
                 elif found_piece and board_loc is not None and board_loc.colour != player.colour:
                     piece_type = board_loc.get_type()
                     if (
@@ -399,6 +443,8 @@ class Logic:
                             lambda move: move in valid_moves,
                             piece.legal_moves
                         ))
+                    else:
+                        return
                 dist += 1
 
         for x_dir in (0, 1, -1):
