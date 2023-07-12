@@ -81,7 +81,8 @@ class Game:
             return {
                 'from_loc': move.from_loc,
                 'to_loc': move.to_loc,
-                'special_move': move.special_move
+                'special_move': move.special_move,
+                'move_str': str(move)
             }
 
         legal_moves = {

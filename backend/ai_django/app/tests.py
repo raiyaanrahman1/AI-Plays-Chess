@@ -2,6 +2,9 @@ from django.test import TestCase
 import sys
 import os
 from .game_classes import settings
+from .game_classes.constants import PIECE_TYPES, KING
+PAWNS, KNIGHTS, BISHOPS, ROOKS, QUEENS = PIECE_TYPES
+ALL_PIECE_TYPES = PIECE_TYPES + (KING,)
 
 settings.init()
 
@@ -63,7 +66,14 @@ class GameTests(TestCase):
         self.print(game.info())
 
     def test_game_via_pgn(self):
+        def check_move_made_in_piece_moves(move_made, pieces):
+            for piece in pieces:
+                for piece_move in piece:
+                    if piece_move['move_str'] in move_made:
+                        return piece_move
+            return None
         from .game_classes.game import Game
+        from pprint import pformat
         settings.set_debug(True)
 
         games = []
@@ -72,9 +82,31 @@ class GameTests(TestCase):
                 if not line.startswith('[') and len(line.strip()) != 0:
                     games.append(line)
 
-        games = [games[0]]
-        for game_str in games:
+        MAX_GAMES = 10
+        games = games[:MAX_GAMES]
+        for game_num, game_str in enumerate(games):
             game_moves = [move for move in game_str.split() if '.' not in move and '-' not in move]
             game = Game()
             game.calculate_legal_moves()
-            print(game)
+
+            for move_num, move_played in enumerate(game_moves):
+                legal_moves = game.get_all_legal_moves()
+                colour = 'white' if move_num % 2 == 0 else 'black'
+                piece_type = move_played[0] if move_played[0] in ALL_PIECE_TYPES else PAWNS
+                pieces = [legal_moves[colour][KING]] if piece_type == KING else legal_moves[colour][piece_type]
+                move = check_move_made_in_piece_moves(move_played, pieces)
+                error_info = {
+                    'game_num': game_num,
+                    'move_num': move_num,
+                    'move number': move_num // 2 + 1,
+                    'game_str': game_str,
+                    'move_played': move_played,
+                    'legal_moves': pieces
+                }
+                self.assertIsNotNone(move, pformat(error_info))
+                game.make_move(
+                    move['from_loc'],
+                    move['to_loc'],
+                    move['special_move']
+                )
+                game.calculate_legal_moves()
