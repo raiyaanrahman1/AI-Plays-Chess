@@ -50,7 +50,8 @@ class Pawn(Piece):
 
         if (self.row == starting_row
                 and in_bounds(two_up)
-                and board[two_up[0]][two_up[1]] is None):
+                and board[two_up[0]][two_up[1]] is None
+                and board[one_up[0]][one_up[1]] is None):
             self.legal_moves.append(Move(self.loc, two_up, board, None, player_pieces))
 
         for loc in (left_diag, right_diag):
