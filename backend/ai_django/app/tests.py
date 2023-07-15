@@ -77,23 +77,8 @@ class GameTests(TestCase):
                     ):
                         return piece_move
             return None
-        from .game_classes.game import Game
-        from pprint import pformat
-        settings.set_debug(True)
 
-        print(coloured(150, 0, 255, 'Running test_game_via_pgn'))
-
-        games = []
-        with open(f'{os.path.dirname(__file__)}/game_data/lichess_db_standard_rated_2013-01.pgn') as file:
-            for line in file:
-                if not line.startswith('[') and len(line.strip()) != 0:
-                    games.append(re.sub('{.*?}', '', line))
-
-        MAX_GAMES = 100
-        games = games[:MAX_GAMES]
-        num_moves_processed = 0
-        start = timer()
-        for game_num, game_str in enumerate(games):
+        def test_game(game_num, game_str):
             game_moves = [move for move in game_str.split() if '.' not in move][:-1]  # gets rid of the result and move numbers
             game = Game()
             game.calculate_legal_moves()
@@ -123,6 +108,32 @@ class GameTests(TestCase):
                     move['to_loc'],
                     move['special_move']
                 )
-                num_moves_processed += 1
+            return len(game_moves)
+
+        from .game_classes.game import Game
+        from pprint import pformat
+        settings.set_debug(True)
+
+        print(coloured(150, 0, 255, 'Running test_game_via_pgn'))
+
+        games = []
+        with open(f'{os.path.dirname(__file__)}/game_data/lichess_db_standard_rated_2013-01.pgn') as file:
+            for line in file:
+                if not line.startswith('[') and len(line.strip()) != 0:
+                    games.append(re.sub('{.*?}', '', line))
+
+        MAX_GAMES = 10000
+        games = games[0:MAX_GAMES]
+
+        num_moves_processed = 0
+        start = timer()
+        for game_num, game_str in enumerate(games):
+            try:
+                num_moves_processed += test_game(game_num, game_str)
+            except Exception as e:
+                print(str(e))
+                print(f'Game Number: {game_num}')
+                break
+
         end = timer()
-        self.print(f'Average number of moves processed per second: {num_moves_processed/(end-start)}')
+        print(f'Average number of moves processed per second: {num_moves_processed/(end-start)}')

@@ -28,12 +28,15 @@ from .move import Move
 PAWNS, KNIGHTS, BISHOPS, ROOKS, QUEENS = PIECE_TYPES
 
 
+# TODO: add types to each parameter to ensure no errors
 # TODO: make the order of parameters consistent for these methods
 class Logic:
     @staticmethod
     def calculate_moves_for_both_players(
         player, opponent, board, move_history, material, check_checks=True
     ):
+        # TODO: Maybe make pieces[KING] contain a list of kings, even though there can only be
+        # one king, to make it more consistent with the other pieces and avoid redundancies like the following
         player.pieces[KING].calculate_moves(board, move_history)
         opponent.pieces[KING].calculate_moves(board, move_history)
         for piece_type in PIECE_TYPES:
@@ -160,7 +163,7 @@ class Logic:
                 KNIGHTS: Knight
             }
             piece_class = piece_type_to_class[promotion_piece]
-            piece_id = len(player.pieces[promotion_piece])
+            piece_id = max([piece.id for piece in player.pieces[promotion_piece].values()] + [-1]) + 1
             new_piece = piece_class(piece_id, to_loc, player.colour)
             player.pieces[promotion_piece][piece_id] = new_piece
 
@@ -286,8 +289,12 @@ class Logic:
                 return False
             if len(player.pieces[BISHOPS]) >= 2 and (
                 any(
-                    colour_of_square(bishop.loc) != colour_of_square(player.pieces[BISHOPS][0].loc)
-                    for bishop in player.pieces[BISHOPS]
+                    # TODO: might want to change back pieces[piece_type] to being a list instead of a dictionary for simplicity
+                    # Deleting an entry in a dictionary is simpler, but also leads to problems like the following
+                    # It's probably best to finish adding types to every parameter first to make it easier to know
+                    # where to make changes after changing the data structure of a variable/class property/parameter
+                    colour_of_square(bishop.loc) != colour_of_square(list(player.pieces[BISHOPS].values())[0].loc)
+                    for bishop in player.pieces[BISHOPS].values()
                 )
             ):
                 return False
@@ -295,8 +302,8 @@ class Logic:
                 len(player.pieces[BISHOPS]) >= 1
                 and len(players[1-i].pieces[BISHOPS]) >= 1
                 and any(
-                    colour_of_square(bishop.loc) != colour_of_square(player.pieces[BISHOPS][0].loc)
-                    for bishop in (player.pieces[BISHOPS] + players[1-i].pieces[BISHOPS])
+                    colour_of_square(bishop.loc) != colour_of_square(list(player.pieces[BISHOPS].values())[0].loc)
+                    for bishop in (list(player.pieces[BISHOPS].values()) + list(players[1-i].pieces[BISHOPS].values()))
                 )
             ):
                 return False
