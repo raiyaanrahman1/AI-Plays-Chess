@@ -47,7 +47,7 @@ def test_game_helper(game_num, game_str):
     game.calculate_legal_moves()
 
     for move_num, move_played in enumerate(game_moves):
-        if re.search('[RNQ][a-h][1-8]x?[a-h][1-8]', move_played):
+        if re.search('[RBNQ][a-h][1-8]x?[a-h][1-8]', move_played):
             move_played = move_played[0] + move_played[2:]  # Seems to be a bug where lichess will write Rd1d2 instead of R1d2 in pgn
 
         legal_moves = game.get_all_legal_moves()
