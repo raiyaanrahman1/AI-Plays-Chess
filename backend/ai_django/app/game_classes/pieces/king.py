@@ -3,15 +3,19 @@ from ..constants import KING
 from ..constants import SHORT_CASTLE, LONG_CASTLE
 from ..utilities import in_bounds
 from ..move import Move
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..types import ColourType, LocType, BoardType, MoveHisType
 
 
 class King(Piece):
-    def __init__(self, id, loc, colour):
+    def __init__(self, id: int, loc: 'LocType', colour: 'ColourType'):
         super().__init__(id, loc, colour)
-        self.short_castle_rights = True
-        self.long_castle_rights = True
+        self.short_castle_rights: bool = True
+        self.long_castle_rights: bool = True
 
-    def get_type(self):
+    def get_type(self) -> str:
         return KING
 
     def get_name(self) -> str:
@@ -20,7 +24,7 @@ class King(Piece):
     def __str__(self) -> str:
         return '♔' if self.colour == 'white' else '♚'
 
-    def calculate_moves(self, board, move_history) -> None:
+    def calculate_moves(self, board: 'BoardType', move_history: 'MoveHisType') -> None:
         up = (self.row + 1, self.col)
         down = (self.row - 1, self.col)
         left = (self.row, self.col - 1)

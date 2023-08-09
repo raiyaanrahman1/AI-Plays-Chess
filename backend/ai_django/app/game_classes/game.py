@@ -3,6 +3,16 @@ from .player import Player
 from .game_logic import Logic
 from .utilities import get_board_string, get_board_representation
 from .move import Move
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .types import (
+        BoardType,
+        MoveType,
+        LocType,
+        MaterialType,
+        MoveHisType
+    )
 from .constants import PIECE_TYPES
 from .constants import KING
 PAWNS, KNIGHTS, BISHOPS, ROOKS, QUEENS = PIECE_TYPES
@@ -16,8 +26,8 @@ class Game:
         self.black_pieces = self.black_player.pieces
         self.players = (self.white_player, self.black_player)
         self.player_pieces = (self.white_player.pieces, self.black_player.pieces)
-        self.move_history = []
-        self.material = {
+        self.move_history: 'MoveHisType' = []
+        self.material: 'MaterialType' = {
             'white': {PAWNS: 0, KNIGHTS: 0, BISHOPS: 0, ROOKS: 0, QUEENS: 0},
             'black': {PAWNS: 0, KNIGHTS: 0, BISHOPS: 0, ROOKS: 0, QUEENS: 0},
         }
@@ -29,7 +39,7 @@ class Game:
             'last_move_was_capture': False
         }
 
-    def setup_board(self) -> None:
+    def setup_board(self) -> 'BoardType':
         return [
             [
                 self.white_pieces[ROOKS][0],
@@ -64,7 +74,7 @@ class Game:
             self.white_player, self.black_player, self.board, self.move_history, self.material
         )
 
-    def make_move(self, from_loc, to_loc, special_move=None):
+    def make_move(self, from_loc: 'LocType', to_loc: 'LocType', special_move: str | None = None):
         player_index = len(self.move_history) % 2
         self.game_status = Logic.make_move(
             self.board,
@@ -77,7 +87,7 @@ class Game:
 
     def get_all_legal_moves(self):
 
-        def get_move_info(move):
+        def get_move_info(move: 'MoveType'):
             return {
                 'from_loc': move.from_loc,
                 'to_loc': move.to_loc,

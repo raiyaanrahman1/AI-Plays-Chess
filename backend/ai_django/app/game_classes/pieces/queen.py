@@ -2,10 +2,14 @@ from .piece import Piece
 from ..constants import QUEENS
 from .bishop import Bishop
 from .rook import Rook
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..types import BoardType, MoveHisType
 
 
 class Queen(Piece):
-    def get_type(self):
+    def get_type(self) -> str:
         return QUEENS
 
     def get_name(self) -> str:
@@ -14,7 +18,7 @@ class Queen(Piece):
     def __str__(self) -> str:
         return '♕' if self.colour == 'white' else '♛'
 
-    def calculate_moves(self, board, move_history) -> None:
+    def calculate_moves(self, board: 'BoardType', move_history: 'MoveHisType') -> None:
         bishop = Bishop(-1, (self.row, self.col), self.colour)
         rook = Rook(-1, (self.row, self.col), self.colour)
         bishop.calculate_moves(board, move_history)

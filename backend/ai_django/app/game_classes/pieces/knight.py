@@ -2,10 +2,14 @@ from .piece import Piece
 from ..constants import KNIGHTS
 from ..utilities import in_bounds
 from ..move import Move
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..types import BoardType, MoveHisType
 
 
 class Knight(Piece):
-    def get_type(self):
+    def get_type(self) -> str:
         return KNIGHTS
 
     def get_name(self) -> str:
@@ -14,7 +18,7 @@ class Knight(Piece):
     def __str__(self) -> str:
         return '♘' if self.colour == 'white' else '♞'
 
-    def calculate_moves(self, board, move_history) -> None:
+    def calculate_moves(self, board: 'BoardType', move_history: 'MoveHisType') -> None:
         up_two_left = (self.row + 2 * self.direction, self.col - 1)
         up_two_right = (self.row + 2 * self.direction, self.col + 1)
         left_two_up = (self.row + 1 * self.direction, self.col - 2)

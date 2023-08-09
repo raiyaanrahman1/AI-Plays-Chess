@@ -2,10 +2,14 @@ from .piece import Piece
 from ..constants import BISHOPS
 from ..utilities import in_bounds
 from ..move import Move
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..types import NonZeroDirectionType, BoardType, MoveHisType
 
 
 class Bishop(Piece):
-    def get_type(self):
+    def get_type(self) -> str:
         return BISHOPS
 
     def get_name(self) -> str:
@@ -14,12 +18,17 @@ class Bishop(Piece):
     def __str__(self) -> str:
         return '♗' if self.colour == 'white' else '♝'
 
-    def calculate_moves_in_direction(self, x_direction, y_direction, board):
+    def calculate_moves_in_direction(
+        self,
+        x_direction: 'NonZeroDirectionType',
+        y_direction: 'NonZeroDirectionType',
+        board: 'BoardType'
+    ):
         x = self.row
         y = self.col
         moves = []
 
-        def move_one_space(x, y):
+        def move_one_space(x: int, y: int):
             return (
                 x + 1 * x_direction,
                 y + 1 * y_direction
@@ -35,7 +44,7 @@ class Bishop(Piece):
 
         return moves
 
-    def calculate_moves(self, board, move_history) -> None:
+    def calculate_moves(self, board: 'BoardType', move_history: 'MoveHisType') -> None:
         self.legal_moves = []
 
         for x_direction in (1, -1):

@@ -6,18 +6,23 @@ from .pieces.queen import Queen
 from .pieces.king import King
 from .constants import PIECE_TYPES
 from .constants import KING
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .types import PlayerPieces, ColourType, NonZeroDirectionType
+
 PAWNS, KNIGHTS, BISHOPS, ROOKS, QUEENS = PIECE_TYPES
 
 
 class Player:
-    def __init__(self, colour) -> None:
+    def __init__(self, colour: 'ColourType') -> None:
         self.colour = colour
-        self.direction = 1 if self.colour == 'white' else -1
+        self.direction: 'NonZeroDirectionType' = 1 if self.colour == 'white' else -1
         self.pieces = self.setup_pieces()
         self.num_legal_moves = 0
 
-    def setup_pieces(self) -> None:
-        pieces = {}
+    def setup_pieces(self) -> 'PlayerPieces':
+        pieces: 'PlayerPieces' = {}
         base_row = 0 if self.colour == 'white' else 7
         pawn_row = base_row + (base_row == 0) - (base_row != 0)
         pieces[PAWNS] = {}

@@ -5,6 +5,15 @@ from .constants import (
     ENPASSANT_LEFT,
     ENPASSANT_RIGHT,
 )
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .types import (
+        BoardType,
+        MoveType,
+        PlayerPiecesType,
+        LocType
+    )
 from .constants import PIECE_TYPES
 PAWNS, KNIGHTS, BISHOPS, ROOKS, QUEENS = PIECE_TYPES
 
@@ -12,15 +21,15 @@ PAWNS, KNIGHTS, BISHOPS, ROOKS, QUEENS = PIECE_TYPES
 class Move:
     def __init__(
             self,
-            from_loc,
-            to_loc,
-            board_before_move,
-            special_move=None
+            from_loc: 'LocType',
+            to_loc: 'LocType',
+            board_before_move: 'BoardType',
+            special_move: None | str = None
     ):
         self.from_loc = from_loc
         self.to_loc = to_loc
         self.special_move = special_move
-        self.move_name = None
+        self.move_name: None | str = None
         self.board_str_before_move = get_board_string(board_before_move)
         self.move_num = -1  # index of move history - set in Logic.make_move()
 
@@ -53,7 +62,7 @@ class Move:
     def __repr__(self):
         return self.__str__()
 
-    def __eq__(self, other):
+    def __eq__(self, other: 'MoveType'):
         # NOTE: This means that moves can be played at different times and be considered
         # equal (since move_num is not checked). It doesn't even have to be the exact same piece_id
         return (
@@ -65,7 +74,7 @@ class Move:
             and self.special_move == other.special_move
         )
 
-    def get_captured_piece(self, board):
+    def get_captured_piece(self, board: 'BoardType'):
         from_loc = self.from_loc
         to_loc = self.to_loc
 
@@ -83,7 +92,7 @@ class Move:
         return None
 
     # returns the move name without any suffixes like + or #
-    def get_basic_move_name(self, player_pieces) -> str:
+    def get_basic_move_name(self, player_pieces: 'PlayerPiecesType') -> str:
         if self.special_move in (SHORT_CASTLE, LONG_CASTLE):
             return self.special_move
 

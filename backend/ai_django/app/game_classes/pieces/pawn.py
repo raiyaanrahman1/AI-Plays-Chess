@@ -10,10 +10,14 @@ from ..constants import (
 )
 from ..utilities import in_bounds
 from ..move import Move
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..types import BoardType, MoveHisType
 
 
 class Pawn(Piece):
-    def get_type(self):
+    def get_type(self) -> str:
         return PAWNS
 
     def get_name(self) -> str:
@@ -22,7 +26,7 @@ class Pawn(Piece):
     def __str__(self) -> str:
         return '♙' if self.colour == 'white' else '♟︎'
 
-    def calculate_moves(self, board, move_history) -> None:
+    def calculate_moves(self, board: 'BoardType', move_history: 'MoveHisType') -> None:
         starting_row = 1 if self.colour == 'white' else 6
 
         self.legal_moves = []

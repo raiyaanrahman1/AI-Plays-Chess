@@ -10,7 +10,21 @@ from .game_errors import (
     InternalInvalidPlayerError,
     InternalIllegalMoveError
 )
-from typing import List
+from typing import List, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .types import (
+        BoardType,
+        MoveHisType,
+        MaterialType,
+        PlayerType,
+        MoveType,
+        PlayerPiecesType,
+        PieceType,
+        DirectionType,
+        LocType
+    )
+
 from . import settings
 from .pieces.knight import Knight
 from .pieces.bishop import Bishop
@@ -33,7 +47,12 @@ PAWNS, KNIGHTS, BISHOPS, ROOKS, QUEENS = PIECE_TYPES
 class Logic:
     @staticmethod
     def calculate_moves_for_both_players(
-        player, opponent, board, move_history, material, check_checks=True
+        player: 'PlayerType',
+        opponent: 'PlayerType',
+        board: 'BoardType',
+        move_history: 'MoveHisType',
+        material: 'MaterialType',
+        check_checks: bool = True
     ):
         # TODO: Maybe make pieces[KING] contain a list of kings, even though there can only be
         # one king, to make it more consistent with the other pieces and avoid redundancies like the following
@@ -57,7 +76,7 @@ class Logic:
         if not settings.debug:
             return result
 
-        def set_move_names(moves: List[Move], player_pieces):
+        def set_move_names(moves: List[Move], player_pieces: 'PlayerPiecesType'):
             for move in moves:
                 move.move_name = move.get_basic_move_name(player_pieces)
 
@@ -73,11 +92,18 @@ class Logic:
         return result
 
     @staticmethod
-    def calculate_legal_moves(player, opponent, board, move_history, material, check_checks=True):
+    def calculate_legal_moves(
+        player: 'PlayerType',
+        opponent: 'PlayerType',
+        board: 'BoardType',
+        move_history: 'MoveHisType',
+        material: 'MaterialType',
+        check_checks: bool = True
+    ):
         in_check = Logic.in_check(board, player, opponent)
         player.num_legal_moves = 0
 
-        def helper(piece):
+        def helper(piece: 'PieceType'):
             if not check_checks:
                 return
             if in_check:
@@ -106,7 +132,15 @@ class Logic:
     # this method is in the Logic class instead of the Move class for flexibility
     # i.e. - you can pass in copied parameters and not have to worry about affecting
     # the originals. See in_check_after_move for an example
-    def make_move(board, player, opponent, move_history, material, move, check_checks=True):
+    def make_move(
+        board: 'BoardType',
+        player: 'PlayerType',
+        opponent: 'PlayerType',
+        move_history: 'MoveHisType',
+        material: 'MaterialType',
+        move: 'MoveType',
+        check_checks: bool = True
+    ):
         # set variables
         from_loc = move.from_loc
         to_loc = move.to_loc
@@ -213,6 +247,9 @@ class Logic:
             f'{player.colour}_in_check': player_in_check,
             f'{opponent.colour}_in_check': opponent_in_check,
             'last_move_was_capture': is_capture,
+            'game_result': '',
+            'winner': None,
+            'game_result_message': ''
         }
 
         move_name_suffix = '+' if opponent_in_check else ''
@@ -239,7 +276,13 @@ class Logic:
     # checks 3-fold repetition, 50 move rule, insufficient mating material
     # should not be called before a move is made
     @staticmethod
-    def is_draw(board, player, opponent, move_history, opponent_in_check):
+    def is_draw(
+        board: 'BoardType',
+        player: 'PlayerType',
+        opponent: 'PlayerType',
+        move_history: 'MoveHisType',
+        opponent_in_check: bool
+    ):
         if not opponent_in_check and opponent.num_legal_moves == 0:
             return (True, 'stalemate')
 
@@ -268,7 +311,7 @@ class Logic:
     # using lichess / FIDE rules, i.e. it's only a draw if there's absolutely no mate possible
     # (it's not a draw if there is a possible mate even if there is no forced mate)
     @staticmethod
-    def insufficient_mating_material(players):
+    def insufficient_mating_material(players: List['PlayerType']):
         for i, player in enumerate(players):
             if (
                 len(player.pieces[PAWNS]) > 0
@@ -311,10 +354,10 @@ class Logic:
         return True
 
     @staticmethod
-    def get_board_from_pieces(player_pieces, opponent_pieces):
-        board = [[None for _ in range(8)] for _ in range(8)]
+    def get_board_from_pieces(player_pieces: 'PlayerPiecesType', opponent_pieces: 'PlayerPiecesType') -> 'BoardType':
+        board: 'BoardType' = [[None for _ in range(8)] for _ in range(8)]
 
-        def set_piece_on_board(piece):
+        def set_piece_on_board(piece: 'PieceType'):
             board[piece.row][piece.col] = piece
 
         for pieces in (player_pieces, opponent_pieces):
@@ -326,7 +369,14 @@ class Logic:
         return board
 
     @staticmethod
-    def in_check_after_move(board, move_history, material, player, opponent, move) -> bool:
+    def in_check_after_move(
+            board: 'BoardType',
+            move_history: 'MoveHisType',
+            material: 'MaterialType',
+            player: 'PlayerType',
+            opponent: 'PlayerType',
+            move: 'MoveType'
+    ) -> bool:
         from_loc = move.from_loc
         to_loc = move.to_loc
 
@@ -353,7 +403,14 @@ class Logic:
     # filters the pieces moves such that after the move is made, the player's king is not in check
     # pre-condition: the king is not currently in check
     @staticmethod
-    def validate_moves(board, move_history, material, piece, player, opponent):
+    def validate_moves(
+        board: 'BoardType',
+        move_history: 'MoveHisType',
+        material: 'MaterialType',
+        piece: 'PieceType',
+        player: 'PlayerType',
+        opponent: 'PlayerType'
+    ):
         if piece.get_type() == KING:
             legal_moves = []
             for move in piece.legal_moves:
@@ -385,8 +442,8 @@ class Logic:
 
         king_row, king_col = player.pieces[KING].loc
 
-        def validate_in_dir(x_dir, y_dir):
-            def check_for_enpassent(piece, loc, player, board):
+        def validate_in_dir(x_dir: 'DirectionType', y_dir: 'DirectionType'):
+            def check_for_enpassent(piece: 'PieceType', loc: 'LocType', player: 'PlayerType', board: 'BoardType'):
                 if (
                     piece.get_type() == PAWNS
                     and loc[0] == piece.loc[0] + 1 * player.direction
@@ -461,7 +518,7 @@ class Logic:
                 validate_in_dir(x_dir, y_dir)
 
     @staticmethod
-    def in_check(board, player, opponent) -> bool:
+    def in_check(board: 'BoardType', player: 'PlayerType', opponent: 'PlayerType') -> bool:
         # Might want to reimplement by calculating lines from the king (and knight paths)
         # Why? Average branching-factor (i.e. number of legal moves in a position) is 35
         # Number of squares needed using lines is also 35 but that's in the worst case

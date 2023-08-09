@@ -2,10 +2,15 @@ from .piece import Piece
 from ..constants import ROOKS
 from ..utilities import in_bounds
 from ..move import Move
+from typing import Literal
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..types import BoardType, MoveHisType, NonZeroDirectionType
 
 
 class Rook(Piece):
-    def get_type(self):
+    def get_type(self) -> str:
         return ROOKS
 
     def get_name(self) -> str:
@@ -14,7 +19,7 @@ class Rook(Piece):
     def __str__(self) -> str:
         return '♖' if self.colour == 'white' else '♜'
 
-    def calculate_moves_in_direction(self, direction, sign, board):
+    def calculate_moves_in_direction(self, direction: Literal['x', 'y'], sign: 'NonZeroDirectionType', board: 'BoardType'):
         x = self.row
         y = self.col
         moves = []
@@ -35,7 +40,7 @@ class Rook(Piece):
 
         return moves
 
-    def calculate_moves(self, board, move_history) -> None:
+    def calculate_moves(self, board: 'BoardType', move_history: 'MoveHisType') -> None:
         self.legal_moves = []
 
         for direction in ('x', 'y'):

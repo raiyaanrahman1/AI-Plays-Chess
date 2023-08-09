@@ -1,8 +1,14 @@
-def in_bounds(loc):
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .types import LocType, BoardType, ColourType
+
+
+def in_bounds(loc: 'LocType'):
     return 0 <= loc[0] <= 7 and 0 <= loc[1] <= 7
 
 
-def index_to_letter(index):
+def index_to_letter(index: int):
     INDEX_TO_LETTER_MAP = {
         0: 'a',
         1: 'b',
@@ -16,11 +22,11 @@ def index_to_letter(index):
     return INDEX_TO_LETTER_MAP[index]
 
 
-def loc_to_chess_notation(loc):
+def loc_to_chess_notation(loc: 'LocType'):
     return f'{index_to_letter(loc[1])}{loc[0] + 1}'
 
 
-def get_board_string(board) -> str:
+def get_board_string(board: 'BoardType') -> str:
     result = ''
     for i in range(len(board)):
         for piece in board[len(board) - i - 1]:
@@ -30,7 +36,7 @@ def get_board_string(board) -> str:
     return result
 
 
-def get_board_representation(board):
+def get_board_representation(board: 'BoardType'):
     board_repr = []
     for row in board:
         repr_row = []
@@ -43,5 +49,5 @@ def get_board_representation(board):
     return board_repr
 
 
-def colour_of_square(loc) -> str:
+def colour_of_square(loc: 'LocType') -> 'ColourType':
     return 'black' if loc[0] % 2 == loc[1] % 2 else 'white'
