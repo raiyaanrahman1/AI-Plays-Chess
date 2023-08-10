@@ -6,7 +6,7 @@ if TYPE_CHECKING:
     from .types import (
         LocType,
         ColourType
-)
+    )
 
 
 class GameError(Exception):

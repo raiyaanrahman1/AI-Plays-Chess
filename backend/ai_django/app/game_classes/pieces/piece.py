@@ -12,7 +12,7 @@ class Piece:
         self.id = id
         self.row, self.col = loc
         self.loc = loc
-        self.colour = colour
+        self.colour: 'ColourType' = colour
         self.direction = 1 if self.colour == 'white' else -1
         self.legal_moves: List[MoveType] = []
 

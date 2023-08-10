@@ -19,7 +19,7 @@ if TYPE_CHECKING:
         MaterialType,
         PlayerType,
         MoveType,
-        PlayerPiecesType,
+        PieceCollectionType,
         PieceType,
         DirectionType,
         LocType
@@ -59,9 +59,9 @@ class Logic:
         player.pieces[KING].calculate_moves(board, move_history)
         opponent.pieces[KING].calculate_moves(board, move_history)
         for piece_type in PIECE_TYPES:
-            for piece in player.pieces[piece_type].values():
+            for piece in player.pieces[piece_type]:
                 piece.calculate_moves(board, move_history)
-            for piece in opponent.pieces[piece_type].values():
+            for piece in opponent.pieces[piece_type]:
                 piece.calculate_moves(board, move_history)
 
         player_in_check = Logic.calculate_legal_moves(
@@ -76,7 +76,7 @@ class Logic:
         if not settings.debug:
             return result
 
-        def set_move_names(moves: List[Move], player_pieces: 'PlayerPiecesType'):
+        def set_move_names(moves: List[Move], player_pieces: 'PieceCollectionType'):
             for move in moves:
                 move.move_name = move.get_basic_move_name(player_pieces)
 
@@ -84,9 +84,9 @@ class Logic:
         set_move_names(opponent.pieces[KING].legal_moves, opponent.pieces)
 
         for piece_type in PIECE_TYPES:
-            for piece in player.pieces[piece_type].values():
+            for piece in player.pieces[piece_type]:
                 set_move_names(piece.legal_moves, player.pieces)
-            for piece in opponent.pieces[piece_type].values():
+            for piece in opponent.pieces[piece_type]:
                 set_move_names(piece.legal_moves, opponent.pieces)
 
         return result
@@ -123,7 +123,7 @@ class Logic:
 
         helper(player.pieces[KING])
         for piece_type in PIECE_TYPES:
-            for piece in player.pieces[piece_type].values():
+            for piece in player.pieces[piece_type]:
                 helper(piece)
 
         return in_check
@@ -174,7 +174,9 @@ class Logic:
 
         if captured_piece is not None:
             assert captured_piece.colour != player.colour
-            del opponent.pieces[captured_piece.get_type()][captured_piece.id]
+            opponent.pieces[captured_piece.get_type()] = [
+                piece_ for piece_ in opponent.pieces[captured_piece.get_type()] if piece_.id != captured_piece.id
+            ]
 
             if move.special_move in (ENPASSANT_LEFT, ENPASSANT_RIGHT):
                 board[captured_piece.row][captured_piece.col] = None
@@ -187,7 +189,7 @@ class Logic:
         board[to_loc[0]][to_loc[1]] = piece
 
         if move.special_move is not None and move.special_move.startswith('promote'):
-            del player.pieces[PAWNS][piece.id]
+            player.pieces[PAWNS] = [piece_ for piece_ in player.pieces[PAWNS] if piece_.id != piece.id]
 
             promotion_piece = move.special_move.split(':')[1]
             piece_type_to_class = {
@@ -197,24 +199,26 @@ class Logic:
                 KNIGHTS: Knight
             }
             piece_class = piece_type_to_class[promotion_piece]
-            piece_id = max([piece.id for piece in player.pieces[promotion_piece].values()] + [-1]) + 1
+            piece_id = max([piece.id for piece in player.pieces[promotion_piece]] + [-1]) + 1
             new_piece = piece_class(piece_id, to_loc, player.colour)
-            player.pieces[promotion_piece][piece_id] = new_piece
+            player.pieces[promotion_piece].append(new_piece)
 
             # update board
             board[to_loc[0]][to_loc[1]] = new_piece
 
         elif move.special_move == SHORT_CASTLE:
-            player.pieces[ROOKS][1].set_loc((to_loc[0], to_loc[1] - 1))
+            rook = player.get_piece_by_id(ROOKS, 1)
+            rook.set_loc((to_loc[0], to_loc[1] - 1))
 
             board[to_loc[0]][to_loc[1] + 1] = None
-            board[to_loc[0]][to_loc[1] - 1] = player.pieces[ROOKS][1]
+            board[to_loc[0]][to_loc[1] - 1] = rook
 
         elif move.special_move == LONG_CASTLE:
-            player.pieces[ROOKS][0].set_loc((to_loc[0], to_loc[1] + 1))
+            rook = player.get_piece_by_id(ROOKS, 0)
+            rook.set_loc((to_loc[0], to_loc[1] + 1))
 
             board[to_loc[0]][to_loc[1] - 2] = None
-            board[to_loc[0]][to_loc[1] + 1] = player.pieces[ROOKS][0]
+            board[to_loc[0]][to_loc[1] + 1] = rook
 
         if captured_piece is not None and captured_piece.get_type() == ROOKS:
             if captured_piece.id == 0:
@@ -336,8 +340,8 @@ class Logic:
                     # Deleting an entry in a dictionary is simpler, but also leads to problems like the following
                     # It's probably best to finish adding types to every parameter first to make it easier to know
                     # where to make changes after changing the data structure of a variable/class property/parameter
-                    colour_of_square(bishop.loc) != colour_of_square(list(player.pieces[BISHOPS].values())[0].loc)
-                    for bishop in player.pieces[BISHOPS].values()
+                    colour_of_square(bishop.loc) != colour_of_square(list(player.pieces[BISHOPS])[0].loc)
+                    for bishop in player.pieces[BISHOPS]
                 )
             ):
                 return False
@@ -345,8 +349,8 @@ class Logic:
                 len(player.pieces[BISHOPS]) >= 1
                 and len(players[1-i].pieces[BISHOPS]) >= 1
                 and any(
-                    colour_of_square(bishop.loc) != colour_of_square(list(player.pieces[BISHOPS].values())[0].loc)
-                    for bishop in (list(player.pieces[BISHOPS].values()) + list(players[1-i].pieces[BISHOPS].values()))
+                    colour_of_square(bishop.loc) != colour_of_square(list(player.pieces[BISHOPS])[0].loc)
+                    for bishop in (list(player.pieces[BISHOPS]) + list(players[1-i].pieces[BISHOPS]))
                 )
             ):
                 return False
@@ -354,7 +358,7 @@ class Logic:
         return True
 
     @staticmethod
-    def get_board_from_pieces(player_pieces: 'PlayerPiecesType', opponent_pieces: 'PlayerPiecesType') -> 'BoardType':
+    def get_board_from_pieces(player_pieces: 'PieceCollectionType', opponent_pieces: 'PieceCollectionType') -> 'BoardType':
         board: 'BoardType' = [[None for _ in range(8)] for _ in range(8)]
 
         def set_piece_on_board(piece: 'PieceType'):
@@ -362,7 +366,7 @@ class Logic:
 
         for pieces in (player_pieces, opponent_pieces):
             for piece_type in (KNIGHTS, BISHOPS, ROOKS, QUEENS, PAWNS):
-                for piece in pieces[piece_type].values():
+                for piece in pieces[piece_type]:
                     set_piece_on_board(piece)
             set_piece_on_board(pieces[KING])
 
@@ -524,7 +528,7 @@ class Logic:
         # Number of squares needed using lines is also 35 but that's in the worst case
         # so it could improve performance
         for piece_type in [KNIGHTS, BISHOPS, ROOKS, QUEENS]:
-            for piece in opponent.pieces[piece_type].values():
+            for piece in opponent.pieces[piece_type]:
                 if Move(piece.loc, player.pieces[KING].loc, board) in piece.legal_moves:
                     return True
 

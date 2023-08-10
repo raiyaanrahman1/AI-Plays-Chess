@@ -1,5 +1,10 @@
 from typing import List, Dict, Tuple, Literal
 from .pieces.piece import Piece
+from .pieces.pawn import Pawn
+from .pieces.bishop import Bishop
+from .pieces.knight import Knight
+from .pieces.rook import Rook
+from .pieces.queen import Queen
 from .pieces.king import King
 from .player import Player
 from .move import Move
@@ -18,13 +23,13 @@ DirectionType = Literal[-1, 0, 1]
 MoveType = Move
 
 
-class PlayerPieces(TypedDict):
-    P: Dict[int, Piece]
-    N: Dict[int, Piece]
-    B: Dict[int, Piece]
-    R: Dict[int, Piece]
-    Q: Dict[int, Piece]
+class PieceCollection(TypedDict):
+    P: List[Pawn]
+    N: List[Knight]
+    B: List[Bishop]
+    R: List[Rook]
+    Q: List[Queen]
     K: King
 
 
-PlayerPiecesType = PlayerPieces
+PieceCollectionType = PieceCollection

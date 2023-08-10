@@ -104,7 +104,7 @@ class Game:
         for player in self.players:
             for piece_type in PIECE_TYPES:
                 legal_moves[player.colour][piece_type] = []
-                for piece in player.pieces[piece_type].values():
+                for piece in player.pieces[piece_type]:
                     legal_moves[player.colour][piece_type].append(
                         [get_move_info(move) for move in piece.legal_moves]
                     )

@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from .types import (
         BoardType,
         MoveType,
-        PlayerPiecesType,
+        PieceCollectionType,
         LocType
     )
 from .constants import PIECE_TYPES
@@ -92,7 +92,7 @@ class Move:
         return None
 
     # returns the move name without any suffixes like + or #
-    def get_basic_move_name(self, player_pieces: 'PlayerPiecesType') -> str:
+    def get_basic_move_name(self, player_pieces: 'PieceCollectionType') -> str:
         if self.special_move in (SHORT_CASTLE, LONG_CASTLE):
             return self.special_move
 
@@ -100,7 +100,7 @@ class Move:
 
         extra_potential_from_locs = []
         if piece_type in (KNIGHTS, BISHOPS, ROOKS, QUEENS):
-            for piece in player_pieces[piece_type].values():
+            for piece in player_pieces[piece_type]:
                 if (
                     piece.id != self.piece_id
                     and any(other_move.to_loc == self.to_loc for other_move in piece.legal_moves)

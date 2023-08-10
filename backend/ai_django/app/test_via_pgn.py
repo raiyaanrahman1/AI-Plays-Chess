@@ -4,6 +4,7 @@
 
 import os
 import re
+import traceback
 from multiprocessing import Pool
 from .game_classes.game import Game
 from pprint import pformat
@@ -14,6 +15,7 @@ PAWNS, KNIGHTS, BISHOPS, ROOKS, QUEENS = PIECE_TYPES
 ALL_PIECE_TYPES = PIECE_TYPES + (KING,)
 
 MAX_GAMES = 1000
+PRINT_TRACE_BACK = True
 
 
 def check_move_made_in_piece_moves(move_made, pieces):
@@ -38,6 +40,8 @@ def test_game(game):
         return test_game_helper(game_num, game_str)
     except Exception as e:
         print(str(e))
+        if PRINT_TRACE_BACK:
+            print(traceback.format_exc())
         print(f'Game Number: {game_num}')
 
 
