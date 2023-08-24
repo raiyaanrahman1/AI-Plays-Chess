@@ -14,8 +14,7 @@ if TYPE_CHECKING:
         MoveHisType
     )
 from .constants import PIECE_TYPES
-from .constants import KING
-PAWNS, KNIGHTS, BISHOPS, ROOKS, QUEENS = PIECE_TYPES
+PAWNS, KNIGHTS, BISHOPS, ROOKS, QUEENS, KINGS = PIECE_TYPES
 
 
 class Game:
@@ -46,7 +45,7 @@ class Game:
                 self.white_pieces[KNIGHTS][0],
                 self.white_pieces[BISHOPS][0],
                 self.white_pieces[QUEENS][0],
-                self.white_pieces[KING],
+                self.white_pieces[KINGS][0],
                 self.white_pieces[BISHOPS][1],
                 self.white_pieces[KNIGHTS][1],
                 self.white_pieces[ROOKS][1],
@@ -62,7 +61,7 @@ class Game:
                 self.black_pieces[KNIGHTS][0],
                 self.black_pieces[BISHOPS][0],
                 self.black_pieces[QUEENS][0],
-                self.black_pieces[KING],
+                self.black_pieces[KINGS][0],
                 self.black_pieces[BISHOPS][1],
                 self.black_pieces[KNIGHTS][1],
                 self.black_pieces[ROOKS][1],
@@ -108,8 +107,8 @@ class Game:
                     legal_moves[player.colour][piece_type].append(
                         [get_move_info(move) for move in piece.legal_moves]
                     )
-            legal_moves[player.colour][KING] = [
-                get_move_info(move) for move in player.pieces[KING].legal_moves
+            legal_moves[player.colour][KINGS][0] = [
+                get_move_info(move) for move in player.pieces[KINGS][0].legal_moves
             ]
 
         return legal_moves

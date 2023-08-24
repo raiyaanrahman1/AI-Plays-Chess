@@ -5,13 +5,12 @@ from .pieces.rook import Rook
 from .pieces.queen import Queen
 from .pieces.king import King
 from .constants import PIECE_TYPES
-from .constants import KING
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .types import PieceCollection, ColourType, NonZeroDirectionType, PieceType
 
-PAWNS, KNIGHTS, BISHOPS, ROOKS, QUEENS = PIECE_TYPES
+PAWNS, KNIGHTS, BISHOPS, ROOKS, QUEENS, KINGS = PIECE_TYPES
 
 
 class Player:
@@ -39,7 +38,7 @@ class Player:
             Bishop(1, (base_row, 5), self.colour)
         ]
         pieces[QUEENS] = [Queen(0, (base_row, 3), self.colour)]
-        pieces[KING] = King(0, (base_row, 4), self.colour)
+        pieces[KINGS] = [King(0, (base_row, 4), self.colour)]
         return pieces
 
     def get_piece_by_id(self, piece_type: str, piece_id: int) -> 'PieceType | None':

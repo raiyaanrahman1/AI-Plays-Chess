@@ -29,7 +29,7 @@ class PieceCollection(TypedDict):
     B: List[Bishop]
     R: List[Rook]
     Q: List[Queen]
-    K: King
+    K: List[King]  # This list should always be only of size 1
 
 
 PieceCollectionType = PieceCollection

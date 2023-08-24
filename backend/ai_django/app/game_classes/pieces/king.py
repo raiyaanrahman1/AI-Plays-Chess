@@ -1,5 +1,5 @@
 from .piece import Piece
-from ..constants import KING
+from ..constants import KINGS
 from ..constants import SHORT_CASTLE, LONG_CASTLE
 from ..utilities import in_bounds
 from ..move import Move
@@ -16,7 +16,7 @@ class King(Piece):
         self.long_castle_rights: bool = True
 
     def get_type(self) -> str:
-        return KING
+        return KINGS
 
     def get_name(self) -> str:
         return 'King'

@@ -9,13 +9,14 @@ from multiprocessing import Pool
 from .game_classes.game import Game
 from pprint import pformat
 from .game_classes import settings
-from .game_classes.constants import PIECE_TYPES, KING
+from .game_classes.constants import PIECE_TYPES
 from timeit import default_timer as timer
-PAWNS, KNIGHTS, BISHOPS, ROOKS, QUEENS = PIECE_TYPES
-ALL_PIECE_TYPES = PIECE_TYPES + (KING,)
+PAWNS, KNIGHTS, BISHOPS, ROOKS, QUEENS, KINGS = PIECE_TYPES
 
 MAX_GAMES = 1000
 PRINT_TRACE_BACK = True
+
+# import debugpy
 
 
 def check_move_made_in_piece_moves(move_made, pieces):
@@ -56,11 +57,11 @@ def test_game_helper(game_num, game_str):
 
         legal_moves = game.get_all_legal_moves()
         colour = 'white' if move_num % 2 == 0 else 'black'
-        piece_type = move_played[0] if move_played[0] in ALL_PIECE_TYPES else PAWNS
+        piece_type = move_played[0] if move_played[0] in PIECE_TYPES else PAWNS
         if 'O-O' in move_played or 'O-O-O' in move_played:
-            piece_type = KING
+            piece_type = KINGS
 
-        pieces = [legal_moves[colour][KING]] if piece_type == KING else legal_moves[colour][piece_type]
+        pieces = legal_moves[colour][piece_type]
         move = check_move_made_in_piece_moves(move_played, pieces)
         error_info = {
             'game_num': game_num,
@@ -79,6 +80,13 @@ def test_game_helper(game_num, game_str):
 
 
 if __name__ == '__main__':
+    # 5678 is the default attach port in the VS Code debug configurations. Unless a host and port are specified, host defaults to 127.0.0.1
+    # debugpy.listen(5678)
+    # print("Waiting for debugger attach")
+    # debugpy.wait_for_client()
+    # debugpy.breakpoint()
+    # print('break on this line')
+
     pool = Pool()
 
     games = []

@@ -31,7 +31,6 @@ from .pieces.bishop import Bishop
 from .pieces.rook import Rook
 from .pieces.queen import Queen
 from .constants import PIECE_TYPES
-from .constants import KING
 from .constants import (
     SHORT_CASTLE,
     LONG_CASTLE,
@@ -39,7 +38,7 @@ from .constants import (
     ENPASSANT_RIGHT,
 )
 from .move import Move
-PAWNS, KNIGHTS, BISHOPS, ROOKS, QUEENS = PIECE_TYPES
+PAWNS, KNIGHTS, BISHOPS, ROOKS, QUEENS, KINGS = PIECE_TYPES
 
 
 # TODO: add types to each parameter to ensure no errors
@@ -54,10 +53,6 @@ class Logic:
         material: 'MaterialType',
         check_checks: bool = True
     ):
-        # TODO: Maybe make pieces[KING] contain a list of kings, even though there can only be
-        # one king, to make it more consistent with the other pieces and avoid redundancies like the following
-        player.pieces[KING].calculate_moves(board, move_history)
-        opponent.pieces[KING].calculate_moves(board, move_history)
         for piece_type in PIECE_TYPES:
             for piece in player.pieces[piece_type]:
                 piece.calculate_moves(board, move_history)
@@ -79,9 +74,6 @@ class Logic:
         def set_move_names(moves: List[Move], player_pieces: 'PieceCollectionType'):
             for move in moves:
                 move.move_name = move.get_basic_move_name(player_pieces)
-
-        set_move_names(player.pieces[KING].legal_moves, player.pieces)
-        set_move_names(opponent.pieces[KING].legal_moves, opponent.pieces)
 
         for piece_type in PIECE_TYPES:
             for piece in player.pieces[piece_type]:
@@ -121,7 +113,6 @@ class Logic:
                 Logic.validate_moves(board, move_history, material, piece, player, opponent)
             player.num_legal_moves += len(piece.legal_moves)
 
-        helper(player.pieces[KING])
         for piece_type in PIECE_TYPES:
             for piece in player.pieces[piece_type]:
                 helper(piece)
@@ -162,15 +153,15 @@ class Logic:
             )
 
         # set castling rights
-        if piece.get_type() == KING:
+        if piece.get_type() == KINGS:
             piece.short_castle_rights = False
             piece.long_castle_rights = False
 
         if piece.get_type() == ROOKS:
             if piece.id == 0:
-                player.pieces[KING].long_castle_rights = False
+                player.pieces[KINGS][0].long_castle_rights = False
             elif piece.id == 1:
-                player.pieces[KING].short_castle_rights = False
+                player.pieces[KINGS][0].short_castle_rights = False
 
         if captured_piece is not None:
             assert captured_piece.colour != player.colour
@@ -222,9 +213,9 @@ class Logic:
 
         if captured_piece is not None and captured_piece.get_type() == ROOKS:
             if captured_piece.id == 0:
-                opponent.pieces[KING].long_castle_rights = False
+                opponent.pieces[KINGS][0].long_castle_rights = False
             elif captured_piece.id == 1:
-                opponent.pieces[KING].short_castle_rights = False
+                opponent.pieces[KINGS][0].short_castle_rights = False
 
         # update move history
         move.move_num = len(move_history)
@@ -232,7 +223,7 @@ class Logic:
 
         # update material
         is_capture = captured_piece is not None
-        if is_capture and captured_piece.get_type() != KING:
+        if is_capture and captured_piece.get_type() != KINGS:
             material[player.colour][captured_piece.get_type()] += 1
         if promotion_piece is not None:
             material[player.colour][new_piece.get_type()] += 1
@@ -365,10 +356,9 @@ class Logic:
             board[piece.row][piece.col] = piece
 
         for pieces in (player_pieces, opponent_pieces):
-            for piece_type in (KNIGHTS, BISHOPS, ROOKS, QUEENS, PAWNS):
+            for piece_type in PIECE_TYPES:
                 for piece in pieces[piece_type]:
                     set_piece_on_board(piece)
-            set_piece_on_board(pieces[KING])
 
         return board
 
@@ -415,7 +405,7 @@ class Logic:
         player: 'PlayerType',
         opponent: 'PlayerType'
     ):
-        if piece.get_type() == KING:
+        if piece.get_type() == KINGS:
             legal_moves = []
             for move in piece.legal_moves:
                 moves_to_check = []
@@ -441,10 +431,10 @@ class Logic:
                 if moves_are_legal:
                     legal_moves.append(move)
 
-            player.pieces[KING].legal_moves = legal_moves
+            player.pieces[KINGS][0].legal_moves = legal_moves
             return
 
-        king_row, king_col = player.pieces[KING].loc
+        king_row, king_col = player.pieces[KINGS][0].loc
 
         def validate_in_dir(x_dir: 'DirectionType', y_dir: 'DirectionType'):
             def check_for_enpassent(piece: 'PieceType', loc: 'LocType', player: 'PlayerType', board: 'BoardType'):
@@ -529,17 +519,17 @@ class Logic:
         # so it could improve performance
         for piece_type in [KNIGHTS, BISHOPS, ROOKS, QUEENS]:
             for piece in opponent.pieces[piece_type]:
-                if Move(piece.loc, player.pieces[KING].loc, board) in piece.legal_moves:
+                if Move(piece.loc, player.pieces[KINGS][0].loc, board) in piece.legal_moves:
                     return True
 
         # the other King can't actually put the player in check
         # this is simply to prevent the kings from being adjacent
-        if (Move(opponent.pieces[KING].loc, player.pieces[KING].loc, board)
-                in opponent.pieces[KING].legal_moves):
+        if (Move(opponent.pieces[KINGS][0].loc, player.pieces[KINGS][0].loc, board)
+                in opponent.pieces[KINGS][0].legal_moves):
             return True
 
-        left_diag = (player.pieces[KING].row + 1 * player.direction, player.pieces[KING].col - 1)
-        right_diag = (player.pieces[KING].row + 1 * player.direction, player.pieces[KING].col + 1)
+        left_diag = (player.pieces[KINGS][0].row + 1 * player.direction, player.pieces[KINGS][0].col - 1)
+        right_diag = (player.pieces[KINGS][0].row + 1 * player.direction, player.pieces[KINGS][0].col + 1)
 
         for loc in (left_diag, right_diag):
             if not in_bounds(loc):

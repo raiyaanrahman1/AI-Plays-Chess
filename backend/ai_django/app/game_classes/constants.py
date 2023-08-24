@@ -3,7 +3,7 @@ KNIGHTS = 'N'
 BISHOPS = 'B'
 ROOKS = 'R'
 QUEENS = 'Q'
-KING = 'K'
+KINGS = 'K'
 
 PIECE_TYPES = (
     PAWNS,
@@ -11,6 +11,7 @@ PIECE_TYPES = (
     BISHOPS,
     ROOKS,
     QUEENS,
+    KINGS
 )
 
 SHORT_CASTLE = 'O-O'
