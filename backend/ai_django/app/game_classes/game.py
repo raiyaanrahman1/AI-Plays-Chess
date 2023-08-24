@@ -73,7 +73,7 @@ class Game:
             self.white_player, self.black_player, self.board, self.move_history, self.material
         )
 
-    def make_move(self, from_loc: 'LocType', to_loc: 'LocType', special_move: str | None = None):
+    def make_move(self, from_loc: 'LocType', to_loc: 'LocType', special_move: 'str | None' = None):
         player_index = len(self.move_history) % 2
         self.game_status = Logic.make_move(
             self.board,

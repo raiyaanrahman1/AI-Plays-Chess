@@ -46,7 +46,7 @@ class IllegalMoveError(GameError):
         piece_name: str,
         start_pos: 'LocType',
         end_pos: 'LocType',
-        special_move: str | None = None,
+        special_move: 'str | None' = None,
         message_prefix: str = ''
     ) -> None:
         start_loc = loc_to_chess_notation(start_pos)
@@ -83,7 +83,7 @@ class InternalIllegalMoveError(IllegalMoveError):
         piece_name: str,
         start_pos: 'LocType',
         end_pos: 'LocType',
-        special_move: str | None = None
+        special_move: 'str | None' = None
     ) -> None:
         message_prefix = 'Internal Error:\n'
         super().__init__(
