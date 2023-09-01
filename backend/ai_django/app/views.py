@@ -98,7 +98,48 @@ def submit_move(request):
     return JsonResponse(response)
 
 
+# @csrf_exempt
+# @require_http_methods(["POST"])
+# def update_move_tree(request):
+#     global game
+#     if game is None:
+#         return JsonResponse(
+#             'Need to start the game first by making a create-game request',
+#             safe=False,
+#             status=400
+#         )
+#     depth = request.GET.get('depth')
+#     game.update_move_tree(int(depth.strip()))
+#     response = {'success': True}
+#     return JsonResponse(response)
+
+
 @csrf_exempt
-@require_http_methods(["GET"])
-def get_best_move():
-    pass
+@require_http_methods(["POST"])
+def play_best_move(request):
+    global game
+    if game is None:
+        return JsonResponse(
+            'Need to start the game first by making a create-game request',
+            safe=False,
+            status=400
+        )
+
+    try:
+        depth = request.GET.get('depth')
+        game.update_move_tree(int(depth.strip()))
+        from_loc, to_loc, special_move = game.play_best_move()
+    except Exception as err:
+        return JsonResponse(str(err), safe=False, status=400)
+
+    response = {
+        'board': game.get_board_repr(),
+        'legal_moves': game.get_all_legal_moves(),
+        'material': game.material,
+        'move_history': [str(move) for move in game.move_history],
+        'game_status': game.game_status,
+        'from_loc': from_loc,
+        'to_loc': to_loc,
+        'special_move': special_move
+    }
+    return JsonResponse(response)

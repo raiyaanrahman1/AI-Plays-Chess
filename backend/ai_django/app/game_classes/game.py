@@ -37,6 +37,7 @@ class Game:
             'black_in_check': False,
             'last_move_was_capture': False
         }
+        self.move_tree = None
 
     def setup_board(self) -> 'BoardType':
         return [
@@ -83,6 +84,56 @@ class Game:
             self.material,
             Move(from_loc, to_loc, self.board, special_move)
         )
+
+        if self.move_tree is not None:
+            for child_state in self.move_tree['children']:
+                move_made = child_state['move_before_current_state']
+                if (
+                    move_made.from_loc == from_loc
+                    and move_made.to_loc == to_loc
+                    and move_made.special_move == special_move
+                    and move_made.colour == self.players[player_index].colour
+                ):
+                    self.move_tree = child_state
+                    return
+
+    def update_move_tree(self, depth):
+        player_index = len(self.move_history) % 2
+        self.move_tree = Logic.calculate_deep_moves(
+            self.board,
+            self.move_history,
+            self.material,
+            self.players[player_index],
+            self.players[1-player_index],
+            self.game_status,
+            depth,
+            self.move_tree
+        )
+
+    def play_best_move(self):
+        if self.move_tree is None or self.move_tree['best_move'] is None:
+            raise Exception('Cannot make best move before updating the move tree')
+
+        if len(self.move_history) == 0 or self.move_history[-1].colour != self.move_tree['best_move'].colour:
+            move = self.move_tree['best_move']
+            self.make_move(move.from_loc, move.to_loc, move.special_move)
+            return move.from_loc, move.to_loc, move.special_move
+
+        last_move = self.move_history[-1]
+
+        for child_state in self.move_tree['children']:
+            move_made = child_state['move_before_current_state']
+            if (
+                move_made.from_loc == last_move.from_loc
+                and move_made.to_loc == last_move.to_loc
+                and move_made.special_move == last_move.special_move
+                and move_made.colour == last_move.colour
+            ):
+                best_move = child_state['best_move']
+                self.make_move(best_move.from_loc, best_move.to_loc, best_move.special_move)
+                return best_move.from_loc, best_move.to_loc, best_move.special_move
+
+        raise Exception('Could not find move made in the move tree')
 
     def get_all_legal_moves(self):
 

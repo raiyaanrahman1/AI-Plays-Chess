@@ -14,7 +14,7 @@ from typing import TypedDict
 BoardType = List[List[Piece | None]]
 PieceType = Piece
 MoveHisType = List[Move]
-MaterialType = Dict[str, Dict[str, int]]
+MaterialType = Dict[Literal['white', 'black'], Dict[str, int]]
 LocType = Tuple[int, int]
 PlayerType = Player
 ColourType = Literal['white', 'black']

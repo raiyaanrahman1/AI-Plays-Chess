@@ -22,20 +22,33 @@ body {
     height: calc(var(--square-len) * 8);
     display: flex;
     flex-direction: column;
+    align-items: center;
+}
+
+#game-mode-select-container {
+    width: 100%;
+    display: flex;
+    justify-content: space-evenly;
+}
+
+#game-mode-select {
+    display: inline;
 }
 
 #move-history-container h2 {
     text-align: center;
     text-decoration: underline;
+    width: 60%;
 }
 
 #move-history {
     flex-grow: 1;
     overflow-y: scroll;
+    width: 60%;
 }
 
 .move {
-    margin-left: 80px;
+    margin-left: 20px;
 }
 
 .ply {

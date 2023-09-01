@@ -8,6 +8,15 @@ let boardData = [];
 let material = {};
 let moveHistory = [];
 let gameStatus = {};
+// let updateMoveTreePromise = null;
+
+const modes = {
+    'ai-2': {is_ai: true, depth: 2},
+    'ai-3': {is_ai: true, depth: 3},
+    'self-play': {is_ai: false}
+};
+
+let selectedMode = modes["ai-2"];
 
 const SQUARE_LEN = parseInt(
     getComputedStyle(document.body).getPropertyValue('--square-len')
@@ -98,6 +107,7 @@ async function createGame() {
         const data = await res.json();
         updateGameState(data);
         updateBoard(data.board);
+        // updateMoveTree();
     } catch (err) {
         console.log(err);
     }
@@ -123,6 +133,9 @@ function updateMoveHistory() {
 
 async function submitMove({from_loc, to_loc, special_move}) {
     try {
+        // if (updateMoveTreePromise !== null) {
+        //     await updateMoveTreePromise;
+        // } 
         const res = await fetch(apiUrl + 'submit-move?' + new URLSearchParams({
             from_loc,
             to_loc,
@@ -149,6 +162,53 @@ async function submitMove({from_loc, to_loc, special_move}) {
         }
 
         updateMoveHistory();
+        if (selectedMode.is_ai && moveHistory.length % 2 == 1) {
+            await playAiMove();
+            // updateMoveTree();
+        }
+    } catch (err) {
+        console.log(err);
+    }
+}
+
+async function playAiMove() {
+    // const res = await updateMoveTreePromise;
+    // updateMoveTreePromise = null;
+    // if (!res.ok) throw Error(res.statusText);
+    // const data = await res.json();
+
+    try {
+        const res2 = await fetch(
+            apiUrl + 'play-best-move?' + new URLSearchParams({depth: selectedMode.depth}),
+            {
+                method: "POST",
+                headers: {
+                    'content-type': "application/json"
+                },
+            }
+        );
+        if (!res2.ok) throw Error(res2.statusText);
+        const data = await res2.json();
+        console.log(data.from_loc);
+
+        const promises = animateMove({from_loc: data.from_loc, to_loc: data.to_loc, special_move: data.special_move}, squares[data.from_loc[0]][data.from_loc[1]], false);
+        await Promise.all(promises);
+
+        updateGameState(data);
+        updateBoard(data.board);
+        
+        if (gameStatus.last_move_was_capture) {
+            new Audio('assets/sounds/Capture.mp3').play();
+        } else {
+            new Audio('assets/sounds/StandardMove.mp3').play();
+        }
+
+        if (gameStatus.game_finished) {
+            new Audio('assets/sounds/GenericNotify.mp3').play();
+        }
+
+        updateMoveHistory();
+        console.log(squares)
     } catch (err) {
         console.log(err);
     }
@@ -246,7 +306,7 @@ function animateMoveHelper(fromLoc, toLoc, pieceWrapperOverride = null) {
     })
 }
 
-function animateMove(move, pieceType, colour, focusedSquare, dragged) {
+function animateMove(move, focusedSquare, dragged) {
     const promises = [];
     if (!dragged) {
         promises.push(animateMoveHelper(move.from_loc, move.to_loc));
@@ -317,7 +377,7 @@ async function makeMove(move, pieceType, colour, focusedSquare, dragged) {
 
     }
     if (['O-O', 'O-O-O'].includes(move.special_move) || !dragged) {
-        promises = animateMove(move, pieceType, colour, focusedSquare, dragged);
+        promises = animateMove(move, focusedSquare, dragged);
     }
     await Promise.all(promises);
     await submitMove(move);
@@ -326,6 +386,10 @@ async function makeMove(move, pieceType, colour, focusedSquare, dragged) {
 let selectedSquareId = null;
 
 async function moveEvent(focusedSquare, dragged, dropped = false) {
+    if (selectedMode.is_ai && moveHistory.length % 2 != 0) {
+        return;
+    }
+
     if (selectedSquareId === focusedSquare.id) {
         if (dragged) return;
         selectedSquareId = null;
@@ -432,6 +496,21 @@ function setPieceWrapperEvents() {
     });
 }
 
+// function updateMoveTree() {
+//     try {
+//         updateMoveTreePromise = fetch(apiUrl + 'update-move-tree?' + new URLSearchParams({
+//             depth: selectedMode.depth
+//         }), {
+//             method: "POST",
+//             headers: {
+//                 'content-type': "application/json"
+//             },
+//         });
+//     } catch (err) {
+//         console.log(err);
+//     }
+// }
+
 let mouseX = null, mouseY = null;
 let resetPos = true;
 let ui_drop_promise = new Promise((resolve) => resolve());
@@ -455,6 +534,12 @@ createGame().then(() => {
         $('.square').click(function () {
             const dragged = false;
             moveEvent(this, dragged);
+        });
+        $('#game-mode-select').change(function () {
+            selectedMode = modes[this.value];
+            if (selectedMode.is_ai) {
+
+            }
         });
         $('.ui-elements-wrapper').droppable({
             drop: function (event, ui) {
