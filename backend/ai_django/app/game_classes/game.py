@@ -86,7 +86,7 @@ class Game:
         )
 
         if self.move_tree is not None:
-            for child_state in self.move_tree['children']:
+            for child_state in self.move_tree['children'].values():
                 move_made = child_state['move_before_current_state']
                 if (
                     move_made.from_loc == from_loc
@@ -121,7 +121,7 @@ class Game:
 
         last_move = self.move_history[-1]
 
-        for child_state in self.move_tree['children']:
+        for child_state in self.move_tree['children'].values():
             move_made = child_state['move_before_current_state']
             if (
                 move_made.from_loc == last_move.from_loc

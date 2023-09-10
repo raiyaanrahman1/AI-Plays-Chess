@@ -332,10 +332,6 @@ class Logic:
                 return False
             if len(player.pieces[BISHOPS]) >= 2 and (
                 any(
-                    # TODO: might want to change back pieces[piece_type] to being a list instead of a dictionary for simplicity
-                    # Deleting an entry in a dictionary is simpler, but also leads to problems like the following
-                    # It's probably best to finish adding types to every parameter first to make it easier to know
-                    # where to make changes after changing the data structure of a variable/class property/parameter
                     colour_of_square(bishop.loc) != colour_of_square(list(player.pieces[BISHOPS])[0].loc)
                     for bishop in player.pieces[BISHOPS]
                 )
@@ -391,7 +387,7 @@ class Logic:
                 'game_status': game_status,
                 'move_history_str': str(move_history),
             },
-            'children': [],
+            'children': {},
             'best_move': None
         }
 
@@ -457,40 +453,31 @@ class Logic:
             for piece in player.pieces[piece_type]:
                 for move in piece.legal_moves:
                     if depth > 0 and beta > alpha:
-                        move_in_current_tree = False
-                        if currentTree is not None:
-                            # TODO: change structure of tree['children'] so can search by piece_type
-                            for childTree in currentTree['children']:
-                                if (
-                                    childTree['move_before_current_state'].from_loc == move.from_loc
-                                    and childTree['move_before_current_state'].to_loc == move.to_loc
-                                    and childTree['move_before_current_state'].special_move == move.special_move
-                                    and childTree['move_before_current_state'].colour == move.colour
-                                ):
-                                    childTree = Logic.calculate_deep_moves(
-                                        childTree['game_state_after_move']['board'],
-                                        childTree['game_state_after_move']['move_history'],
-                                        childTree['game_state_after_move']['material'],
-                                        childTree['game_state_after_move']['player'],
-                                        childTree['game_state_after_move']['opponent'],
-                                        childTree['game_state_after_move']['game_status'],
-                                        depth - 1,
-                                        childTree,
-                                        alpha,
-                                        beta
-                                    )
-                                    eval = childTree['eval']
+                        move_id = str(move.from_loc) + str(move.to_loc) + str(move.special_move)
+                        if (currentTree is not None and move_id in currentTree['children']):
+                            childTree = currentTree['children'][move_id]
+                            childTree = Logic.calculate_deep_moves(
+                                childTree['game_state_after_move']['board'],
+                                childTree['game_state_after_move']['move_history'],
+                                childTree['game_state_after_move']['material'],
+                                childTree['game_state_after_move']['player'],
+                                childTree['game_state_after_move']['opponent'],
+                                childTree['game_state_after_move']['game_status'],
+                                depth - 1,
+                                childTree,
+                                alpha,
+                                beta
+                            )
+                            eval = childTree['eval']
 
-                                    max_or_min = max if player.colour == 'white' else min
-                                    curr_eval = max_or_min(curr_eval, eval)
-                                    if curr_eval == eval:
-                                        currentTree['best_move'] = move
-                                    alpha_or_beta = alpha if player.colour == 'white' else beta
-                                    alpha_or_beta = max_or_min(alpha_or_beta, curr_eval)
-                                    move_in_current_tree = True
-                                    break
+                            max_or_min = max if player.colour == 'white' else min
+                            curr_eval = max_or_min(curr_eval, eval)
+                            if curr_eval == eval:
+                                currentTree['best_move'] = move
+                            alpha_or_beta = alpha if player.colour == 'white' else beta
+                            alpha_or_beta = max_or_min(alpha_or_beta, curr_eval)
 
-                        if not move_in_current_tree:
+                        else:
                             from_loc = move.from_loc
                             to_loc = move.to_loc
 
@@ -531,7 +518,8 @@ class Logic:
                                 currentTree['best_move'] = move
                             alpha_or_beta = alpha if player.colour == 'white' else beta
                             alpha_or_beta = max_or_min(alpha_or_beta, curr_eval)
-                            currentTree['children'].append(child_state)
+
+                            currentTree['children'][move_id] = child_state
                             move_history.pop()
 
         currentTree['eval'] = curr_eval
