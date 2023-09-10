@@ -189,7 +189,7 @@ async function playAiMove() {
         );
         if (!res2.ok) throw Error(res2.statusText);
         const data = await res2.json();
-        console.log(data.from_loc);
+        // console.log(data.from_loc);
 
         const promises = animateMove({from_loc: data.from_loc, to_loc: data.to_loc, special_move: data.special_move}, squares[data.from_loc[0]][data.from_loc[1]], false);
         await Promise.all(promises);
@@ -208,7 +208,7 @@ async function playAiMove() {
         }
 
         updateMoveHistory();
-        console.log(squares)
+        // console.log(squares)
     } catch (err) {
         console.log(err);
     }
@@ -243,7 +243,7 @@ function moveIsLegal(fromLoc, toLoc, fromLocPieceInfo) {
 
     if (turn !== colour) return null;
 
-    function checkPieceMoves(piece) {
+    for (let piece of legalMoves[colour][pieceType]) {
         for (let move of piece) {
             if (
                 arraysEqual(move.from_loc, fromLoc)
@@ -252,16 +252,6 @@ function moveIsLegal(fromLoc, toLoc, fromLocPieceInfo) {
                 return move;
             }
         }
-        return null;
-    }
-
-    if (pieceType === 'K') {
-        return checkPieceMoves(legalMoves[colour][pieceType]);
-    }
-
-    for (let piece of legalMoves[colour][pieceType]) {
-        const containsMove = checkPieceMoves(piece);
-        if (containsMove !== null) return containsMove;
     }
 
     return null;
