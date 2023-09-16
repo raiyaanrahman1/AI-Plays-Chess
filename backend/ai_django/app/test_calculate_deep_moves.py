@@ -19,26 +19,17 @@ settings.set_debug(True)
 game = Game()
 game.calculate_legal_moves()
 
-start = timer()
+for _ in range(4):
+    start = timer()
 
-game.update_move_tree(2)
+    game.update_move_tree(2)
 
-end = timer()
+    end = timer()
 
-print(f'Time taken: {end - start}')
-print(game.move_tree['eval'])
-print(game.move_tree['best_move'])
+    print(game.move_tree['best_move'])
+    print(game.move_tree['eval'])
+    print(f'Time taken: {end - start}')
 
-best_move = game.move_tree['best_move']
+    best_move = game.move_tree['best_move']
 
-game.make_move(best_move.from_loc, best_move.to_loc, best_move.special_move)
-
-start = timer()
-
-game.update_move_tree(2)
-
-end = timer()
-
-print(f'Time taken: {end - start}')
-print(game.move_tree['eval'])
-print(game.move_tree['best_move'])
+    game.make_move(best_move.from_loc, best_move.to_loc, best_move.special_move)
