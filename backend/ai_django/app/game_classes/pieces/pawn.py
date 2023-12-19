@@ -26,7 +26,7 @@ class Pawn(Piece):
     def __str__(self) -> str:
         return '♙' if self.colour == 'white' else '♟︎'
 
-    def calculate_moves(self, board: 'BoardType', move_history: 'MoveHisType') -> None:
+    def calculate_moves(self, board: 'BoardType', move_history: 'MoveHisType', board_str: str) -> None:
         starting_row = 1 if self.colour == 'white' else 6
 
         self.legal_moves = []
@@ -43,20 +43,20 @@ class Pawn(Piece):
             ):
                 self.legal_moves.extend(
                     [
-                        Move(self.loc, one_up, board, PROMOTE_TO_QUEEN),
-                        Move(self.loc, one_up, board, PROMOTE_TO_ROOK),
-                        Move(self.loc, one_up, board, PROMOTE_TO_BISHOP),
-                        Move(self.loc, one_up, board, PROMOTE_TO_KNIGHT)
+                        Move(self.loc, one_up, board, board_str, PROMOTE_TO_QUEEN),
+                        Move(self.loc, one_up, board, board_str, PROMOTE_TO_ROOK),
+                        Move(self.loc, one_up, board, board_str, PROMOTE_TO_BISHOP),
+                        Move(self.loc, one_up, board, board_str, PROMOTE_TO_KNIGHT)
                     ]
                 )
             else:
-                self.legal_moves.append(Move(self.loc, one_up, board))
+                self.legal_moves.append(Move(self.loc, one_up, board, board_str))
 
         if (self.row == starting_row
                 and in_bounds(two_up)
                 and board[two_up[0]][two_up[1]] is None
                 and board[one_up[0]][one_up[1]] is None):
-            self.legal_moves.append(Move(self.loc, two_up, board))
+            self.legal_moves.append(Move(self.loc, two_up, board, board_str))
 
         for loc in (left_diag, right_diag):
             if (
@@ -70,14 +70,14 @@ class Pawn(Piece):
                 ):
                     self.legal_moves.extend(
                         [
-                            Move(self.loc, loc, board, PROMOTE_TO_QUEEN),
-                            Move(self.loc, loc, board, PROMOTE_TO_ROOK),
-                            Move(self.loc, loc, board, PROMOTE_TO_BISHOP),
-                            Move(self.loc, loc, board, PROMOTE_TO_KNIGHT)
+                            Move(self.loc, loc, board, board_str, PROMOTE_TO_QUEEN),
+                            Move(self.loc, loc, board, board_str, PROMOTE_TO_ROOK),
+                            Move(self.loc, loc, board, board_str, PROMOTE_TO_BISHOP),
+                            Move(self.loc, loc, board, board_str, PROMOTE_TO_KNIGHT)
                         ]
                     )
                 else:
-                    self.legal_moves.append(Move(self.loc, loc, board))
+                    self.legal_moves.append(Move(self.loc, loc, board, board_str))
 
             if (
                 self.row == starting_row + self.direction * 3
@@ -91,4 +91,4 @@ class Pawn(Piece):
                 and move_history[-1].from_loc[0] == self.row + 2 * self.direction
             ):
                 symbol = ENPASSANT_LEFT if loc == left_diag else ENPASSANT_RIGHT
-                self.legal_moves.append(Move(self.loc, loc, board, symbol))
+                self.legal_moves.append(Move(self.loc, loc, board, board_str, symbol))

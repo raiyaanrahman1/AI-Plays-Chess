@@ -18,9 +18,9 @@ class Queen(Piece):
     def __str__(self) -> str:
         return '♕' if self.colour == 'white' else '♛'
 
-    def calculate_moves(self, board: 'BoardType', move_history: 'MoveHisType') -> None:
+    def calculate_moves(self, board: 'BoardType', move_history: 'MoveHisType', board_str: str) -> None:
         bishop = Bishop(-1, (self.row, self.col), self.colour)
         rook = Rook(-1, (self.row, self.col), self.colour)
-        bishop.calculate_moves(board, move_history)
-        rook.calculate_moves(board, move_history)
+        bishop.calculate_moves(board, move_history, board_str)
+        rook.calculate_moves(board, move_history, board_str)
         self.legal_moves = bishop.legal_moves + rook.legal_moves

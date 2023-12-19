@@ -19,7 +19,7 @@ class Rook(Piece):
     def __str__(self) -> str:
         return '♖' if self.colour == 'white' else '♜'
 
-    def calculate_moves_in_direction(self, direction: Literal['x', 'y'], sign: 'NonZeroDirectionType', board: 'BoardType'):
+    def calculate_moves_in_direction(self, direction: Literal['x', 'y'], sign: 'NonZeroDirectionType', board: 'BoardType', board_str: str):
         x = self.row
         y = self.col
         moves = []
@@ -32,17 +32,17 @@ class Rook(Piece):
 
         x, y = move_one_space(x, y)
         while in_bounds((x, y)) and board[x][y] is None:
-            moves.append(Move(self.loc, (x, y), board))
+            moves.append(Move(self.loc, (x, y), board, board_str))
             x, y = move_one_space(x, y)
 
         if in_bounds((x, y)) and board[x][y].colour != self.colour:
-            moves.append(Move(self.loc, (x, y), board))
+            moves.append(Move(self.loc, (x, y), board, board_str))
 
         return moves
 
-    def calculate_moves(self, board: 'BoardType', move_history: 'MoveHisType') -> None:
+    def calculate_moves(self, board: 'BoardType', move_history: 'MoveHisType', board_str: str) -> None:
         self.legal_moves = []
 
         for direction in ('x', 'y'):
             for sign in (1, -1):
-                self.legal_moves += self.calculate_moves_in_direction(direction, sign, board)
+                self.legal_moves += self.calculate_moves_in_direction(direction, sign, board, board_str)

@@ -22,7 +22,8 @@ class Bishop(Piece):
         self,
         x_direction: 'NonZeroDirectionType',
         y_direction: 'NonZeroDirectionType',
-        board: 'BoardType'
+        board: 'BoardType',
+        board_str: str
     ):
         x = self.row
         y = self.col
@@ -36,19 +37,19 @@ class Bishop(Piece):
 
         x, y = move_one_space(x, y)
         while in_bounds((x, y)) and board[x][y] is None:
-            moves.append(Move(self.loc, (x, y), board))
+            moves.append(Move(self.loc, (x, y), board, board_str))
             x, y = move_one_space(x, y)
 
         if in_bounds((x, y)) and board[x][y].colour != self.colour:
-            moves.append(Move(self.loc, (x, y), board))
+            moves.append(Move(self.loc, (x, y), board, board_str))
 
         return moves
 
-    def calculate_moves(self, board: 'BoardType', move_history: 'MoveHisType') -> None:
+    def calculate_moves(self, board: 'BoardType', move_history: 'MoveHisType', board_str) -> None:
         self.legal_moves = []
 
         for x_direction in (1, -1):
             for y_direction in (1, -1):
                 self.legal_moves += self.calculate_moves_in_direction(
-                    x_direction, y_direction, board
+                    x_direction, y_direction, board, board_str,
                 )

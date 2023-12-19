@@ -1,6 +1,8 @@
-from .game_classes.game import Game
+# python -m cProfile -s time test_calculate_deep_moves.py > timed_results.txt
+
+from game_classes.game import Game
 # from .game_classes.game_logic import Logic
-from .game_classes import settings
+from game_classes import settings
 # from pprint import pprint
 # import json
 from timeit import default_timer as timer

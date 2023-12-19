@@ -31,6 +31,7 @@ class Game:
             'black': {PAWNS: 0, KNIGHTS: 0, BISHOPS: 0, ROOKS: 0, QUEENS: 0},
         }
         self.board = self.setup_board()
+        self.board_str = get_board_string(self.board)
         self.game_status = {
             'game_finished': False,
             'white_in_check': False,
@@ -71,7 +72,7 @@ class Game:
 
     def calculate_legal_moves(self) -> None:
         Logic.calculate_moves_for_both_players(
-            self.white_player, self.black_player, self.board, self.move_history, self.material
+            self.white_player, self.black_player, self.board, self.move_history, self.material, self.board_str
         )
 
     def make_move(self, from_loc: 'LocType', to_loc: 'LocType', special_move: 'str | None' = None):
@@ -82,8 +83,10 @@ class Game:
             self.players[1-player_index],
             self.move_history,
             self.material,
-            Move(from_loc, to_loc, self.board, special_move)
+            Move(from_loc, to_loc, self.board, self.board_str, special_move),
+            self.board_str
         )
+        self.board_str = get_board_string(self.board)
 
         if self.move_tree is not None:
             for child_state in self.move_tree['children'].values():

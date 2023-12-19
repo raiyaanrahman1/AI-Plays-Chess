@@ -55,19 +55,20 @@ class Logic:
         board: 'BoardType',
         move_history: 'MoveHisType',
         material: 'MaterialType',
+        board_str: str,
         check_checks: bool = True
     ):
         for piece_type in PIECE_TYPES:
             for piece in player.pieces[piece_type]:
-                piece.calculate_moves(board, move_history)
+                piece.calculate_moves(board, move_history, board_str)
             for piece in opponent.pieces[piece_type]:
-                piece.calculate_moves(board, move_history)
+                piece.calculate_moves(board, move_history, board_str)
 
         player_in_check = Logic.calculate_legal_moves(
-            player, opponent, board, move_history, material, check_checks
+            player, opponent, board, move_history, material, board_str, check_checks
         )
         opponent_in_check = Logic.calculate_legal_moves(
-            opponent, player, board, move_history, material, check_checks
+            opponent, player, board, move_history, material, board_str, check_checks
         )
 
         result = (player_in_check, opponent_in_check)
@@ -94,9 +95,10 @@ class Logic:
         board: 'BoardType',
         move_history: 'MoveHisType',
         material: 'MaterialType',
+        board_str: str,
         check_checks: bool = True
     ):
-        in_check = Logic.in_check(board, player, opponent)
+        in_check = Logic.in_check(board, player, opponent, board_str)
         player.num_legal_moves = 0
 
         def helper(piece: 'PieceType'):
@@ -109,13 +111,13 @@ class Logic:
                         move.special_move != SHORT_CASTLE  # Can't castle when in check
                         and move.special_move != LONG_CASTLE  # Can't castle when in check
                         and not Logic.in_check_after_move(
-                            board, move_history, material, player, opponent, move
+                            board, move_history, material, player, opponent, move, board_str
                         )
                     ),
                     piece.legal_moves
                 ))
             else:
-                Logic.validate_moves(board, move_history, material, piece, player, opponent)
+                Logic.validate_moves(board, move_history, material, piece, player, opponent, board_str)
             player.num_legal_moves += len(piece.legal_moves)
 
         for piece_type in PIECE_TYPES:
@@ -135,6 +137,7 @@ class Logic:
         move_history: 'MoveHisType',
         material: 'MaterialType',
         move: 'MoveType',
+        board_str: str,
         check_checks: bool = True
     ):
         # set variables
@@ -239,7 +242,7 @@ class Logic:
 
         # update legal moves
         player_in_check, opponent_in_check = Logic.calculate_moves_for_both_players(
-            player, opponent, board, move_history, material, check_checks
+            player, opponent, board, move_history, material, board_str, check_checks
         )
 
         game_status = {
@@ -484,6 +487,7 @@ class Logic:
                             temp_player = copy_player(player, move)
                             temp_opponent = copy_player(opponent, move)
                             temp_board = Logic.get_board_from_pieces(temp_player.pieces, temp_opponent.pieces)
+                            temp_board_str = get_board_string(temp_board)
                             temp_material = deepcopy(material)
 
                             if str(move) == 'd5' and str(move_history[-1]) == 'e4':
@@ -495,7 +499,8 @@ class Logic:
                                 temp_opponent,
                                 move_history,
                                 temp_material,
-                                Move(from_loc, to_loc, temp_board, move.special_move),
+                                Move(from_loc, to_loc, temp_board, temp_board_str, move.special_move),
+                                temp_board_str
                             )
 
                             child_state = Logic.calculate_deep_moves(
@@ -532,7 +537,8 @@ class Logic:
             material: 'MaterialType',
             player: 'PlayerType',
             opponent: 'PlayerType',
-            move: 'MoveType'
+            move: 'MoveType',
+            board_str: str
     ) -> bool:
         from_loc = move.from_loc
         to_loc = move.to_loc
@@ -547,11 +553,12 @@ class Logic:
             temp_opponent,
             move_history,
             deepcopy(material),
-            Move(from_loc, to_loc, temp_board, move.special_move),
+            Move(from_loc, to_loc, temp_board, board_str, move.special_move),
+            board_str,
             False
         )
 
-        in_check = Logic.in_check(temp_board, temp_player, temp_opponent)
+        in_check = Logic.in_check(temp_board, temp_player, temp_opponent, board_str)
 
         move_history.pop()
 
@@ -566,21 +573,22 @@ class Logic:
         material: 'MaterialType',
         piece: 'PieceType',
         player: 'PlayerType',
-        opponent: 'PlayerType'
+        opponent: 'PlayerType',
+        board_str: str
     ):
         if piece.get_type() == KINGS:
             legal_moves = []
             for move in piece.legal_moves:
                 moves_to_check = []
                 if move.special_move == SHORT_CASTLE:
-                    moves_to_check.append(Move(piece.loc, (piece.loc[0], piece.loc[1] + 1), board))
+                    moves_to_check.append(Move(piece.loc, (piece.loc[0], piece.loc[1] + 1), board, board_str))
                     moves_to_check.append(
-                        Move(piece.loc, (piece.loc[0], piece.loc[1] + 2), board, SHORT_CASTLE)
+                        Move(piece.loc, (piece.loc[0], piece.loc[1] + 2), board, board_str, SHORT_CASTLE)
                     )
                 elif move.special_move == LONG_CASTLE:
-                    moves_to_check.append(Move(piece.loc, (piece.loc[0], piece.loc[1] - 1), board))
+                    moves_to_check.append(Move(piece.loc, (piece.loc[0], piece.loc[1] - 1), board, board_str))
                     moves_to_check.append(
-                        Move(piece.loc, (piece.loc[0], piece.loc[1] - 2), board, LONG_CASTLE)
+                        Move(piece.loc, (piece.loc[0], piece.loc[1] - 2), board, board_str, LONG_CASTLE)
                     )
                 else:
                     moves_to_check.append(move)
@@ -588,7 +596,7 @@ class Logic:
                 moves_are_legal = True
                 while (i < len(moves_to_check) and moves_are_legal):
                     moves_are_legal = not Logic.in_check_after_move(
-                        board, move_history, material, player, opponent, moves_to_check[i]
+                        board, move_history, material, player, opponent, moves_to_check[i], board_str
                     )
                     i += 1
                 if moves_are_legal:
@@ -606,13 +614,13 @@ class Logic:
                     and loc[0] == piece.loc[0] + 1 * player.direction
                     and loc[1] == piece.loc[1] - 1
                 ):
-                    return Move(piece.loc, loc, board, ENPASSANT_LEFT)
+                    return Move(piece.loc, loc, board, board_str, ENPASSANT_LEFT)
                 elif (
                     piece.get_type() == PAWNS
                     and loc[0] == piece.loc[0] + 1 * player.direction
                     and loc[1] == piece.loc[1] + 1
                 ):
-                    return Move(piece.loc, loc, board, ENPASSANT_RIGHT)
+                    return Move(piece.loc, loc, board, board_str, ENPASSANT_RIGHT)
                 return None
 
             dist = 1
@@ -638,16 +646,16 @@ class Logic:
                     piece = board_loc
                     valid_moves = []
                     for empty_loc in empty_squares_between_king_and_piece:
-                        valid_moves.append(Move(piece.loc, empty_loc, board))
+                        valid_moves.append(Move(piece.loc, empty_loc, board, board_str))
                         enpassent = check_for_enpassent(piece, empty_loc, player, board)
                         if enpassent:
                             valid_moves.append(enpassent)
                     valid_moves = [
-                        Move(piece.loc, empty_loc, board) for empty_loc in empty_squares_between_king_and_piece
+                        Move(piece.loc, empty_loc, board, board_str) for empty_loc in empty_squares_between_king_and_piece
                     ]
 
                 elif found_piece and board_loc is None:
-                    valid_moves.append(Move(piece.loc, loc, board))
+                    valid_moves.append(Move(piece.loc, loc, board, board_str))
                     enpassent = check_for_enpassent(piece, loc, player, board)
                     if enpassent:
                         valid_moves.append(enpassent)
@@ -659,7 +667,7 @@ class Logic:
                         or ((x_dir == 0 or y_dir == 0) and piece_type == ROOKS)
                         or (x_dir != 0 and y_dir != 0 and piece_type == BISHOPS)
                     ):
-                        valid_moves.append(Move(piece.loc, loc, board))
+                        valid_moves.append(Move(piece.loc, loc, board, board_str))
                         piece.legal_moves = list(filter(
                             lambda move: move in valid_moves,
                             piece.legal_moves
@@ -675,19 +683,19 @@ class Logic:
                 validate_in_dir(x_dir, y_dir)
 
     @staticmethod
-    def in_check(board: 'BoardType', player: 'PlayerType', opponent: 'PlayerType') -> bool:
+    def in_check(board: 'BoardType', player: 'PlayerType', opponent: 'PlayerType', board_str: str) -> bool:
         # Might want to reimplement by calculating lines from the king (and knight paths)
         # Why? Average branching-factor (i.e. number of legal moves in a position) is 35
         # Number of squares needed using lines is also 35 but that's in the worst case
         # so it could improve performance
         for piece_type in [KNIGHTS, BISHOPS, ROOKS, QUEENS]:
             for piece in opponent.pieces[piece_type]:
-                if Move(piece.loc, player.pieces[KINGS][0].loc, board) in piece.legal_moves:
+                if Move(piece.loc, player.pieces[KINGS][0].loc, board, board_str) in piece.legal_moves:
                     return True
 
         # the other King can't actually put the player in check
         # this is simply to prevent the kings from being adjacent
-        if (Move(opponent.pieces[KINGS][0].loc, player.pieces[KINGS][0].loc, board)
+        if (Move(opponent.pieces[KINGS][0].loc, player.pieces[KINGS][0].loc, board, board_str)
                 in opponent.pieces[KINGS][0].legal_moves):
             return True
 

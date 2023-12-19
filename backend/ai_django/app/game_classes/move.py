@@ -24,13 +24,14 @@ class Move:
             from_loc: 'LocType',
             to_loc: 'LocType',
             board_before_move: 'BoardType',
+            board_str_before_move: str,
             special_move: 'None | str' = None
     ):
         self.from_loc = from_loc
         self.to_loc = to_loc
         self.special_move = special_move
         self.move_name: 'None | str' = None
-        self.board_str_before_move = get_board_string(board_before_move)
+        self.board_str_before_move = board_str_before_move
         self.move_num = -1  # index of move history - set in Logic.make_move()
 
         if board_before_move[from_loc[0]][from_loc[1]] is None:

@@ -92,7 +92,7 @@ function updateGameState(data) {
     material = data.material;
     moveHistory = data.move_history;
     gameStatus = data.game_status;
-    console.log(boardData, legalMoves, gameStatus, moveHistory);
+    // console.log(boardData, legalMoves, gameStatus, moveHistory);
 }
 
 async function createGame() {
@@ -123,7 +123,7 @@ function updateMoveHistory() {
         moveHistoryEl.append(moveEl);
     } else {
         const moveEl = moveHistoryEl.children().last();
-        console.log(moveEl);
+        // console.log(moveEl);
         const plyEl = $('<div>', {class:'ply'}).text(moveHistory[moveHistory.length - 1]);
         moveEl.append(plyEl);
         moveHistoryEl.append(moveEl);
@@ -178,6 +178,8 @@ async function playAiMove() {
     // const data = await res.json();
 
     try {
+        console.log('Fetching AI Move');
+        const start = Date.now();
         const res2 = await fetch(
             apiUrl + 'play-best-move?' + new URLSearchParams({depth: selectedMode.depth}),
             {
@@ -189,6 +191,7 @@ async function playAiMove() {
         );
         if (!res2.ok) throw Error(res2.statusText);
         const data = await res2.json();
+        console.log(`Got AI Move, took ${(Date.now() - start) / 1000} seconds`);
         // console.log(data.from_loc);
 
         const promises = animateMove({from_loc: data.from_loc, to_loc: data.to_loc, special_move: data.special_move}, squares[data.from_loc[0]][data.from_loc[1]], false);
@@ -350,7 +353,7 @@ function getPromotionPiece(loc, colour) {
             $square.append($ppieceWrapper);
             $promotionWrapper.append($square);
         });
-        console.log(promotionWrapperLoc);
+        // console.log(promotionWrapperLoc);
         const promotionSquare = document.getElementById(promotionWrapperLoc.join(','));
         promotionSquare.style.position = 'relative';
         $(promotionSquare).append($promotionWrapper[0]);

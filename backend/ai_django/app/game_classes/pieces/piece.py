@@ -33,5 +33,5 @@ class Piece:
         pass
 
     @abstractmethod
-    def calculate_moves(self, board: 'BoardType', move_history: 'MoveHisType') -> None:
+    def calculate_moves(self, board: 'BoardType', move_history: 'MoveHisType', board_str: str) -> None:
         pass
