@@ -1,4 +1,3 @@
-from copy import deepcopy
 from .utilities import (
     in_bounds, colour_of_square, get_board_string
 )
@@ -422,30 +421,6 @@ class Logic:
             black_player = 1 - white_player
             return mat[white_player] - mat[black_player] + (num_legal_moves[white_player] - num_legal_moves[black_player]) / 50
 
-        def copy_player(player_to_copy: 'PlayerType', move: 'MoveType'):
-            temp_player = Player(player_to_copy.colour)
-            piece_type_to_class = {
-                PAWNS: Pawn,
-                KNIGHTS: Knight,
-                BISHOPS: Bishop,
-                ROOKS: Rook,
-                QUEENS: Queen,
-                KINGS: King,
-            }
-            for piece_type in player_to_copy.pieces:
-                temp_player.pieces[piece_type] = []
-                for piece in player_to_copy.pieces[piece_type]:
-                    new_piece = piece_type_to_class[piece_type](piece.id, piece.loc, piece.colour)
-                    if piece_type == KINGS:
-                        new_piece.short_castle_rights = piece.short_castle_rights
-                        new_piece.long_castle_rights = piece.long_castle_rights
-
-                    if piece.id == move.piece_id:
-                        new_piece.legal_moves.append(deepcopy(move))
-                    temp_player.pieces[piece_type].append(new_piece)
-
-            return temp_player
-
         if depth == 0:
             currentTree['eval'] = evaluate_position(player, opponent, material, game_status)
             return currentTree
@@ -484,11 +459,11 @@ class Logic:
                             from_loc = move.from_loc
                             to_loc = move.to_loc
 
-                            temp_player = copy_player(player, move)
-                            temp_opponent = copy_player(opponent, move)
+                            temp_player = Logic.copy_player(player)
+                            temp_opponent = Logic.copy_player(opponent)
                             temp_board = Logic.get_board_from_pieces(temp_player.pieces, temp_opponent.pieces)
                             temp_board_str = get_board_string(temp_board)
-                            temp_material = deepcopy(material)
+                            temp_material = Logic.copy_material(material)
 
                             if str(move) == 'd5' and str(move_history[-1]) == 'e4':
                                 pass
@@ -531,6 +506,47 @@ class Logic:
         return currentTree
 
     @staticmethod
+    def copy_player(player: 'PlayerType') -> 'PlayerType':
+        new_player: 'PlayerType' = Player(player.colour)
+        new_player.pieces = {
+            PAWNS: [],
+            KNIGHTS: [],
+            BISHOPS: [],
+            ROOKS: [],
+            KINGS: [],
+            QUEENS: []
+        }
+        for piece_type in PIECE_TYPES:
+            for piece in player.pieces[piece_type]:
+                new_player.pieces[piece_type].append(Logic.copy_piece(piece))
+
+        return new_player
+    
+
+    @staticmethod
+    def copy_piece(piece: 'PieceType') -> 'PieceType':
+        piece_type_to_class = {
+            PAWNS: Pawn,
+            KNIGHTS: Knight,
+            BISHOPS: Bishop,
+            ROOKS: Rook,
+            QUEENS: Queen,
+            KINGS: King,
+        }
+        new_piece: PieceType = piece_type_to_class[piece.get_type()](piece.id, piece.loc, piece.colour)
+        new_piece.legal_moves = piece.legal_moves  # TODO: This might mess up stuff, but should be fine for now since
+                                                    # we always recalculate legal moves by reassigning it to an empty array and
+                                                    # filling it
+        if piece.get_type() == KINGS:
+            new_piece.short_castle_rights = piece.short_castle_rights
+            new_piece.long_castle_rights = piece.long_castle_rights
+        return new_piece
+    
+    @staticmethod
+    def copy_material(material: 'MaterialType') -> 'MaterialType':
+        return {colour: {piece_type: material[colour][piece_type] for piece_type in material[colour]} for colour in material}
+
+    @staticmethod
     def in_check_after_move(
             board: 'BoardType',
             move_history: 'MoveHisType',
@@ -543,8 +559,8 @@ class Logic:
         from_loc = move.from_loc
         to_loc = move.to_loc
 
-        temp_player = deepcopy(player)
-        temp_opponent = deepcopy(opponent)
+        temp_player = Logic.copy_player(player)
+        temp_opponent = Logic.copy_player(opponent)
         temp_board = Logic.get_board_from_pieces(temp_player.pieces, temp_opponent.pieces)
 
         Logic.make_move(
@@ -552,7 +568,7 @@ class Logic:
             temp_player,
             temp_opponent,
             move_history,
-            deepcopy(material),
+            Logic.copy_material(material),
             Move(from_loc, to_loc, temp_board, board_str, move.special_move),
             board_str,
             False
