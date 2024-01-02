@@ -24,7 +24,7 @@ game.calculate_legal_moves()
 for _ in range(4):
     start = timer()
 
-    game.update_move_tree(2)
+    game.update_move_tree(3)
 
     end = timer()
 
