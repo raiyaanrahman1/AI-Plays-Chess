@@ -179,6 +179,7 @@ async function playAiMove() {
 
     try {
         console.log('Fetching AI Move');
+        $('#game-mode-select').attr('disabled', true);
         const start = Date.now();
         const res2 = await fetch(
             apiUrl + 'play-best-move?' + new URLSearchParams({depth: selectedMode.depth}),
@@ -211,6 +212,7 @@ async function playAiMove() {
         }
 
         updateMoveHistory();
+        $('#game-mode-select').attr('disabled', false);
         // console.log(squares)
     } catch (err) {
         console.log(err);
@@ -528,10 +530,16 @@ createGame().then(() => {
             const dragged = false;
             moveEvent(this, dragged);
         });
-        $('#game-mode-select').change(function () {
+        $('#game-mode-select').change(async function () {
+            const prevMode = selectedMode;
             selectedMode = modes[this.value];
-            if (selectedMode.is_ai) {
-
+            if (selectedMode.is_ai && !prevMode.is_ai && moveHistory.length % 2 == 1) {
+                await playAiMove();
+            }
+            if (selectedMode.is_ai && selectedMode.depth == 3) {
+                $('#depth-3-note').removeClass('hidden');
+            } else {
+                $('#depth-3-note').addClass('hidden');
             }
         });
         $('.ui-elements-wrapper').droppable({
