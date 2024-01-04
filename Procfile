@@ -1,0 +1,1 @@
+web: cd backend/ai_django && gunicorn ai_django.wsgi
