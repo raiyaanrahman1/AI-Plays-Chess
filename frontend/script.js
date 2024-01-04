@@ -20,6 +20,10 @@ const modes = {
 
 let selectedMode = modes["ai-2"];
 
+const captureSound = new Audio('static/assets/sounds/Capture.mp3');
+const standardMoveSound = new Audio('static/assets/sounds/StandardMove.mp3');
+const gameFinishedSound = new Audio('static/assets/sounds/GenericNotify.mp3');
+
 const SQUARE_LEN = parseInt(
     getComputedStyle(document.body).getPropertyValue('--square-len')
 );
@@ -154,13 +158,13 @@ async function submitMove({from_loc, to_loc, special_move}) {
         updateBoard(data.board);
         
         if (gameStatus.last_move_was_capture) {
-            new Audio('static/assets/sounds/Capture.mp3').play();
+            captureSound.play();
         } else {
-            new Audio('static/assets/sounds/StandardMove.mp3').play();
+            standardMoveSound.play();
         }
 
         if (gameStatus.game_finished) {
-            new Audio('static/assets/sounds/GenericNotify.mp3').play();
+            gameFinishedSound.play();
         }
 
         updateMoveHistory();
@@ -204,13 +208,13 @@ async function playAiMove() {
         updateBoard(data.board);
         
         if (gameStatus.last_move_was_capture) {
-            new Audio('static/assets/sounds/Capture.mp3').play();
+            captureSound.play();
         } else {
-            new Audio('static/assets/sounds/StandardMove.mp3').play();
+            standardMoveSound.play();
         }
 
         if (gameStatus.game_finished) {
-            new Audio('static/assets/sounds/GenericNotify.mp3').play();
+            gameFinishedSound.play();
         }
 
         updateMoveHistory();
