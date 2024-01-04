@@ -1,6 +1,8 @@
 const boardElement = document.getElementById('board');
 const baseUrl = window.location.protocol + "//" + window.location.hostname;
-const apiUrl = baseUrl + ':8000/api/';
+const apiUrl = baseUrl + '/api/'; // FOR PRODUCTION
+// const apiUrl = baseUrl + ':8000/api/'; // FOR DEVELOPMENT
+
 
 const squares = Array(8);
 let legalMoves = {};
