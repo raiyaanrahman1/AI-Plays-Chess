@@ -1,1 +1,1 @@
-web: gunicorn ai_django.wsgi
+web: cd ai_django && gunicorn ai_django.wsgi
