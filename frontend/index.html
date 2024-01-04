@@ -25,11 +25,15 @@
             <span>Game Mode: </span>
             <select name="game-mode-select" id="game-mode-select">
               <option value="ai-2" selected>AI Depth 2</option>
-              <option value="ai-3">AI Depth 3</option>
+              <option value="ai-3" disabled>AI Depth 3</option>
               <option value="self-play">Self-Play</option>
             </select>
           </div>
-          <p id="depth-3-note" class="hidden">Note: Depth 3 moves may take 1-2 minutes to calculate (work in progress)</p>
+          <p id="depth-3-note">
+            <!-- Note: Depth 3 moves may take 1-2 minutes to calculate (work in progress) -->
+            Note: AI Depth 3 is currently disabled as it requires too much memory for the current production deployment
+            and takes too long (1-2 minutes) to calculate the best move (work in progress).
+          </p>
             
             <h2>Move History</h2>
             <div id="move-history"></div>
