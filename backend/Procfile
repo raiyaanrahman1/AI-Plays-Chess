@@ -1,1 +1,1 @@
-web: cd ai_django && gunicorn ai_django.wsgi
+web: cd ai_django && python manage.py collectstatic --noinput && gunicorn ai_django.wsgi
