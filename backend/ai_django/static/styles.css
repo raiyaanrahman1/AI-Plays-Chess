@@ -1,0 +1,137 @@
+:root {
+    --square-len: 75px;
+    --piece-len: 70px;
+}
+
+body {
+    background-color: #00041c;
+    color: white;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.ui-elements-wrapper {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    height: 100vh;
+}
+
+#move-history-container {
+    width: 300px;
+    /* border: 1px solid white; */
+    height: calc(var(--square-len) * 8);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#game-mode-select-container {
+    width: 100%;
+    display: flex;
+    justify-content: space-evenly;
+}
+
+#game-mode-select {
+    display: inline;
+}
+
+#move-history-container h2 {
+    text-align: center;
+    text-decoration: underline;
+    width: 60%;
+}
+
+#move-history {
+    flex-grow: 1;
+    overflow-y: scroll;
+    width: 60%;
+}
+
+.move {
+    margin-left: 20px;
+}
+
+.ply {
+    display: inline-block;
+    width: 50%;
+}
+
+.square {
+    width: var(--square-len);
+    height: var(--square-len);
+}
+
+.light-square {
+    background-color: #edeed1;
+}
+
+.dark-square {
+    background-color: #779952;
+}
+
+.board-row {
+    display: flex;
+}
+
+.piece {
+    width: var(--piece-len);
+    height: var(--piece-len);
+}
+
+.piece-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: var(--square-len);
+    height: var(--square-len);
+}
+
+.piece-wrapper:hover {
+    cursor: grab;
+}
+
+.piece-wrapper:active {
+    cursor: grabbing;
+}
+
+.light-square.selected {
+    background-color: #f6f688;
+}
+
+.dark-square.selected {
+    background-color: #bbca43;
+}
+
+.promotion-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.promotion-piece-square {
+    background-color: white;
+    border: 1px solid black;
+    z-index: 2;
+}
+
+#board.disable-pointer-events-for-promotion * {
+    pointer-events: none;
+}
+
+#board.disable-pointer-events-for-promotion .promotion-piece-square * {
+    pointer-events: auto;
+}
+
+.check {
+    background: radial-gradient(ellipse at center, red 0%, #e70000 25%, rgba(169,0,0,0) 89%, rgba(158,0,0,0) 100%);
+}
+
+#depth-3-note {
+    font-size: 0.75rem;
+}
+
+.hidden {
+    display: none;
+}

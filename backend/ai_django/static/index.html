@@ -1,0 +1,39 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="{% static 'styles.css' %}">
+    <script
+  src="https://code.jquery.com/jquery-3.6.1.min.js"
+  integrity="sha256-o88AwQnZB+VDvE9tvIXrMQaPlFFSUTR+nldQm1LuPXQ="
+  crossorigin="anonymous"></script>
+    <script
+  src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"
+  integrity="sha256-lSjKY0/srUM9BE3dPm+c4fBo1dky2v27Gdjm2uoZaL0="
+  crossorigin="anonymous"></script>
+    <script src="{% static 'script.js' %}" defer></script>
+    <title>AI Carlsen</title>
+</head>
+<body>
+    <div class="ui-elements-wrapper">
+        <div id="board"></div>
+        <div id="move-history-container">
+          <div id="game-mode-select-container">
+            <span>Game Mode: </span>
+            <select name="game-mode-select" id="game-mode-select">
+              <option value="ai-2" selected>AI Depth 2</option>
+              <option value="ai-3">AI Depth 3</option>
+              <option value="self-play">Self-Play</option>
+            </select>
+          </div>
+          <p id="depth-3-note" class="hidden">Note: Depth 3 moves may take 1-2 minutes to calculate (work in progress)</p>
+            
+            <h2>Move History</h2>
+            <div id="move-history"></div>
+        </div>
+    </div>
+</body>
+</html>
