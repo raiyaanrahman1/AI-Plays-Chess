@@ -61,7 +61,7 @@ function updateBoard(board) {
             const pieceWrapper = document.createElement('div');
             const pieceEl = document.createElement('img');
             const pieceType = pieceLetterToPiece[piece.charAt(1)]
-            pieceEl.src = `assets/pieces/${letterToColour(piece.charAt(0))}_${pieceType}.png`;
+            pieceEl.src = `static/assets/pieces/${letterToColour(piece.charAt(0))}_${pieceType}.png`;
             pieceEl.classList.add('piece');
             if (pieceType === 'pawn') {
                 pieceEl.style.marginLeft = '-3px';
@@ -152,13 +152,13 @@ async function submitMove({from_loc, to_loc, special_move}) {
         updateBoard(data.board);
         
         if (gameStatus.last_move_was_capture) {
-            new Audio('assets/sounds/Capture.mp3').play();
+            new Audio('static/assets/sounds/Capture.mp3').play();
         } else {
-            new Audio('assets/sounds/StandardMove.mp3').play();
+            new Audio('static/assets/sounds/StandardMove.mp3').play();
         }
 
         if (gameStatus.game_finished) {
-            new Audio('assets/sounds/GenericNotify.mp3').play();
+            new Audio('static/assets/sounds/GenericNotify.mp3').play();
         }
 
         updateMoveHistory();
@@ -202,13 +202,13 @@ async function playAiMove() {
         updateBoard(data.board);
         
         if (gameStatus.last_move_was_capture) {
-            new Audio('assets/sounds/Capture.mp3').play();
+            new Audio('static/assets/sounds/Capture.mp3').play();
         } else {
-            new Audio('assets/sounds/StandardMove.mp3').play();
+            new Audio('static/assets/sounds/StandardMove.mp3').play();
         }
 
         if (gameStatus.game_finished) {
-            new Audio('assets/sounds/GenericNotify.mp3').play();
+            new Audio('static/assets/sounds/GenericNotify.mp3').play();
         }
 
         updateMoveHistory();
@@ -350,7 +350,7 @@ function getPromotionPiece(loc, colour) {
                 $('#board').removeClass('disable-pointer-events-for-promotion');
                 resolve(`promote:${pieceType}`);
             });
-            const $piece = $("<img>", {"class": "piece", "src": `assets/pieces/${colour}_${pieceName}.png`});
+            const $piece = $("<img>", {"class": "piece", "src": `static/assets/pieces/${colour}_${pieceName}.png`});
             $ppieceWrapper.append($piece);
             $square.append($ppieceWrapper);
             $promotionWrapper.append($square);
