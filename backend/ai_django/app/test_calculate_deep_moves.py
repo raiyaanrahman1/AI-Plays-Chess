@@ -1,6 +1,7 @@
 # python -m cProfile -s time test_calculate_deep_moves.py > timed_results.txt
 
 from game_classes.game import Game
+import cProfile
 # from .game_classes.game_logic import Logic
 from game_classes import settings
 # from pprint import pprint
@@ -21,10 +22,15 @@ settings.set_debug(True)
 game = Game()
 game.calculate_legal_moves()
 
-for _ in range(4):
+for i in range(4):
     start = timer()
 
-    game.update_move_tree(3)
+    # if i == 3:
+    #     cProfile.run('game.update_move_tree(2)', sort='tottime')
+    # else:
+    #     game.update_move_tree(2)
+
+    game.update_move_tree(2)
 
     end = timer()
 
