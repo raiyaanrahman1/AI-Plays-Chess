@@ -425,7 +425,7 @@ class Logic:
             'move_before_current_state': move_history[-1] if len(move_history) > 0 else None,
             'game_state_after_move': {
                 'board': board,
-                'player': player,  # the player that made the move
+                'player': player,
                 'opponent': opponent,
                 'move_history': move_history,
                 'material': material,
@@ -452,9 +452,6 @@ class Logic:
             num_legal_moves = [player.num_legal_moves, opponent.num_legal_moves]
             mat = [0, 0]
             for i, p in enumerate((player, opponent)):
-                # for piece_type in p.pieces:
-                #     for piece in p.pieces[piece_type]:
-                #         num_legal_moves[i] += len(piece.legal_moves)
                 mat[i] += (
                     material[p.colour][PAWNS]
                     + material[p.colour][KNIGHTS] * 3
@@ -496,98 +493,66 @@ class Logic:
                         Move(from_loc, to_loc, temp_board, temp_board_str, move.special_move),
                         temp_board_str
                     )
-                    last_move = temp_move_history[-1]
                     legal_moves.append({
-                        'temp_board': temp_board,
-                        'temp_player': temp_player,
-                        'temp_opponent': temp_opponent,
-                        'move_history': temp_move_history,
-                        'temp_material': temp_material,
-                        'game_status': game_status,
-                        'move': move,
-                        'last_move': last_move,
-                        'eval_after_move': evaluate_position(temp_player, temp_opponent, temp_material, game_status)
+                        'move_before_current_state': move,
+                        'game_state_after_move': {
+                            'board': temp_board,
+                            'player': temp_opponent,
+                            'opponent': temp_player,
+                            'move_history': temp_move_history,
+                            'material': temp_material,
+                            'game_status': game_status,
+                            'move_history_str': str(temp_move_history),
+                        },
+                        'children': {},
+                        'leaves': [],
+                        'best_move': None,
+                        'best_move_node': None,
+                        'best_leaf_node': None,
+                        'eval': evaluate_position(temp_player, temp_opponent, temp_material, game_status)
                     })
-        legal_moves.sort(key=lambda game_after_move: game_after_move['eval_after_move'], reverse=player.colour == 'white')
+        legal_moves.sort(key=lambda state: state['eval'], reverse=player.colour == 'white')
+        max_or_min = max if player.colour == 'white' else min
 
         for game_info in legal_moves:
-            move = game_info['move']
+            move = game_info['move_before_current_state']
             if depth > 0 and beta > alpha:
                 move_id = move.id
-                if (currentTree is not None and move_id in currentTree['children']):
-                    childTree = currentTree['children'][move_id]
+                child_move_in_currentTree = currentTree is not None and move_id in currentTree['children']
+                
+                prev_state = currentTree['children'][move_id] if child_move_in_currentTree else game_info
 
-                    # TODO: replace with looping through the leave nodes and calling calculate_deep_moves
-                    childTree = Logic.calculate_deep_moves(
-                        childTree['game_state_after_move']['board'],
-                        childTree['game_state_after_move']['move_history'],
-                        childTree['game_state_after_move']['material'],
-                        childTree['game_state_after_move']['player'],
-                        childTree['game_state_after_move']['opponent'],
-                        childTree['game_state_after_move']['game_status'],
-                        depth - 1,
-                        childTree,
-                        alpha,
-                        beta
-                    )
-                    eval = childTree['eval']
+                child_state = Logic.calculate_deep_moves(
+                    prev_state['game_state_after_move']['board'],
+                    prev_state['game_state_after_move']['move_history'],
+                    prev_state['game_state_after_move']['material'],
+                    prev_state['game_state_after_move']['player'],
+                    prev_state['game_state_after_move']['opponent'],
+                    prev_state['game_state_after_move']['game_status'],
+                    depth - 1,
+                    prev_state,
+                    alpha,
+                    beta
+                )
+                eval = child_state['eval']
 
-                    max_or_min = max if player.colour == 'white' else min
-                    curr_eval = max_or_min(curr_eval, eval)
-                    if curr_eval == eval:
-                        currentTree['best_move'] = move
-                        currentTree['best_move_node'] = childTree
+                curr_eval = max_or_min(curr_eval, eval)
+                if curr_eval == eval:
+                    currentTree['best_move'] = move
+                    currentTree['best_move_node'] = child_state
 
-                        if depth == 1 and (
-                            currentTree['best_leaf_node'] is None or
-                            max_or_min(currentTree['best_leaf_node']['eval'], eval) == eval
-                        ):
-                            currentTree['best_leaf_node'] = childTree
-                        elif depth > 1:
-                            currentTree['best_leaf_node'] = childTree['best_leaf_node']
+                    if depth == 1 and (
+                        currentTree['best_leaf_node'] is None or
+                        max_or_min(currentTree['best_leaf_node']['eval'], eval) == eval
+                    ):
+                        currentTree['best_leaf_node'] = child_state
+                    elif depth > 1:
+                        currentTree['best_leaf_node'] = child_state['best_leaf_node']
 
-                    alpha_or_beta = alpha if player.colour == 'white' else beta
-                    alpha_or_beta = max_or_min(alpha_or_beta, curr_eval)
+                alpha_or_beta = alpha if player.colour == 'white' else beta
+                alpha_or_beta = max_or_min(alpha_or_beta, curr_eval)
 
-                else:
-                    temp_board = game_info['temp_board']
-                    move_history = game_info['move_history']
-                    temp_material = game_info['temp_material']
-                    temp_player = game_info['temp_player']
-                    temp_opponent = game_info['temp_opponent']
-                    game_status = game_info['game_status']
-
-                    child_state = Logic.calculate_deep_moves(
-                        temp_board,
-                        move_history,
-                        temp_material,
-                        temp_opponent,
-                        temp_player,
-                        game_status,
-                        depth - 1,
-                        None,
-                        alpha,
-                        beta
-                    )
-                    eval = child_state['eval']
-
-                    max_or_min = max if player.colour == 'white' else min
-                    curr_eval = max_or_min(curr_eval, eval)
-                    if curr_eval == eval:
-                        currentTree['best_move'] = move
-                        currentTree['best_move_node'] = child_state
-
-                        if depth == 1 and (
-                            currentTree['best_leaf_node'] is None or
-                            max_or_min(currentTree['best_leaf_node']['eval'], eval) == eval
-                        ):
-                            currentTree['best_leaf_node'] = child_state
-                        elif depth > 1:
-                            currentTree['best_leaf_node'] = child_state['best_leaf_node']
-                    
-                    alpha_or_beta = alpha if player.colour == 'white' else beta
-                    alpha_or_beta = max_or_min(alpha_or_beta, curr_eval)
-
+                if not child_move_in_currentTree:
                     currentTree['children'][move_id] = child_state
 
                     if depth == 1:
