@@ -3,6 +3,7 @@ from .player import Player
 from .game_logic import Logic
 from .utilities import get_board_string, get_board_representation
 from .move import Move
+from .ai import ChessAI
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -102,7 +103,7 @@ class Game:
 
     def update_move_tree(self, depth):
         player_index = len(self.move_history) % 2
-        self.move_tree = Logic.calculate_deep_moves(
+        self.move_tree = ChessAI.calculate_deep_moves(
             self.board,
             self.move_history,
             self.material,
