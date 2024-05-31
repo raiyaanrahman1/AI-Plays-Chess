@@ -31,8 +31,6 @@ from .pieces.knight import Knight
 from .pieces.bishop import Bishop
 from .pieces.rook import Rook
 from .pieces.queen import Queen
-from .pieces.pawn import Pawn
-from .pieces.king import King
 from .constants import PIECE_TYPES
 from .constants import (
     SHORT_CASTLE,
@@ -41,7 +39,7 @@ from .constants import (
     ENPASSANT_RIGHT,
 )
 from .move import Move
-from .player import Player
+from .copy_game_objects import CopyGameObjects
 PAWNS, KNIGHTS, BISHOPS, ROOKS, QUEENS, KINGS = PIECE_TYPES
 
 
@@ -361,52 +359,6 @@ class Logic:
         return board
 
     @staticmethod
-    def copy_player(player: 'PlayerType') -> 'PlayerType':
-        new_player: 'PlayerType' = Player(player.colour)
-        new_player.pieces = {
-            PAWNS: [],
-            KNIGHTS: [],
-            BISHOPS: [],
-            ROOKS: [],
-            KINGS: [],
-            QUEENS: []
-        }
-        for piece_type in PIECE_TYPES:
-            for piece in player.pieces[piece_type]:
-                new_player.pieces[piece_type].append(Logic.copy_piece(piece))
-
-        return new_player
-    
-
-    # TODO: move copy_* methods to separate class
-    @staticmethod
-    def copy_piece(piece: 'PieceType') -> 'PieceType':
-        piece_type_to_class = {
-            PAWNS: Pawn,
-            KNIGHTS: Knight,
-            BISHOPS: Bishop,
-            ROOKS: Rook,
-            QUEENS: Queen,
-            KINGS: King,
-        }
-        new_piece: PieceType = piece_type_to_class[piece.get_type()](piece.id, piece.loc, piece.colour)
-        new_piece.legal_moves = piece.legal_moves  # TODO: This might mess up stuff, but should be fine for now since
-                                                    # we always recalculate legal moves by reassigning it to an empty array and
-                                                    # filling it
-        if piece.get_type() == KINGS:
-            new_piece.short_castle_rights = piece.short_castle_rights
-            new_piece.long_castle_rights = piece.long_castle_rights
-        return new_piece
-    
-    @staticmethod
-    def copy_move_history(move_history: 'MoveHisType') -> 'MoveHisType':
-        return [move for move in move_history]
-
-    @staticmethod
-    def copy_material(material: 'MaterialType') -> 'MaterialType':
-        return {colour: {piece_type: material[colour][piece_type] for piece_type in material[colour]} for colour in material}
-
-    @staticmethod
     def in_check_after_move(
             board: 'BoardType',
             move_history: 'MoveHisType',
@@ -419,8 +371,8 @@ class Logic:
         from_loc = move.from_loc
         to_loc = move.to_loc
 
-        temp_player = Logic.copy_player(player)
-        temp_opponent = Logic.copy_player(opponent)
+        temp_player = CopyGameObjects.copy_player(player)
+        temp_opponent = CopyGameObjects.copy_player(opponent)
         temp_board = Logic.get_board_from_pieces(temp_player.pieces, temp_opponent.pieces)
 
         Logic.make_move(
@@ -428,7 +380,7 @@ class Logic:
             temp_player,
             temp_opponent,
             move_history,
-            Logic.copy_material(material),
+            CopyGameObjects.copy_material(material),
             Move(from_loc, to_loc, temp_board, board_str, move.special_move),
             board_str,
             False
