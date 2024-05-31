@@ -34,10 +34,11 @@ for i in range(4):
 
     end = timer()
 
-    print(game.move_tree['best_move'])
-    print(game.move_tree['eval'])
+    print(game.move_tree.best_move)
+    print(game.move_tree.eval)
     print(f'Time taken: {end - start}')
 
-    best_move = game.move_tree['best_move']
+    best_move = game.move_tree.best_move
+    assert best_move is not None
 
     game.make_move(best_move.from_loc, best_move.to_loc, best_move.special_move)

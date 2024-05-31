@@ -21,12 +21,12 @@ if TYPE_CHECKING:
         PieceCollectionType,
         PieceType,
         DirectionType,
-        LocType
+        LocType,
+        GameStatusType
     )
 
 from . import settings
-import math
-import heapq
+from .game_status import GameStatus
 from .pieces.knight import Knight
 from .pieces.bishop import Bishop
 from .pieces.rook import Rook
@@ -139,7 +139,7 @@ class Logic:
         move: 'MoveType',
         board_str: str,
         check_checks: bool = True
-    ):
+    ) -> 'GameStatusType':
         # set variables
         from_loc = move.from_loc
         to_loc = move.to_loc
@@ -245,23 +245,17 @@ class Logic:
             player, opponent, board, move_history, material, board_str, check_checks
         )
 
-        game_status = {
-            'game_finished': False,
-            f'{player.colour}_in_check': player_in_check,
-            f'{opponent.colour}_in_check': opponent_in_check,
-            'last_move_was_capture': is_capture,
-            'game_result': '',
-            'winner': None,
-            'game_result_message': ''
-        }
+        game_status = GameStatus(last_move_was_capture = is_capture)
+        game_status.set_player_in_check(player.colour, player_in_check)
+        game_status.set_player_in_check(opponent.colour, opponent_in_check)
 
         move_name_suffix = '+' if opponent_in_check else ''
         # check for checkmate
         if opponent_in_check and opponent.num_legal_moves == 0:
-            game_status['game_finished'] = True
-            game_status['game_result'] = 'checkmate'
-            game_status['winner'] = player.colour
-            game_status['game_result_message'] = f'{player.colour} won by checkmate'
+            game_status.game_finished = True
+            game_status.game_result = 'checkmate'
+            game_status.winner = player.colour
+            game_status.game_result_message = f'{player.colour} won by checkmate'
             move_name_suffix = '#'
 
         move.move_name = move_name + move_name_suffix
@@ -269,10 +263,10 @@ class Logic:
         # check for draw
         is_draw, draw_by = Logic.is_draw(board, player, opponent, move_history, opponent_in_check)
         if is_draw:
-            game_status['game_finished'] = True
-            game_status['game_result'] = 'draw'
-            game_status['draw_by'] = draw_by
-            game_status['game_result_message'] = f'game drawn by {draw_by}'
+            game_status.game_finished = True
+            game_status.game_result = 'draw'
+            game_status.draw_by = draw_by
+            game_status.game_result_message = f'game drawn by {draw_by}'
 
         return game_status
 
@@ -384,6 +378,7 @@ class Logic:
         return new_player
     
 
+    # TODO: move copy_* methods to separate class
     @staticmethod
     def copy_piece(piece: 'PieceType') -> 'PieceType':
         piece_type_to_class = {

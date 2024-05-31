@@ -8,6 +8,8 @@ from .pieces.queen import Queen
 from .pieces.king import King
 from .player import Player
 from .move import Move
+from .ai import TreeNode, GameState
+from .game_status import GameStatus
 from typing import TypedDict
 
 
@@ -21,6 +23,9 @@ ColourType = Literal['white', 'black']
 NonZeroDirectionType = Literal[1, -1]
 DirectionType = Literal[-1, 0, 1]
 MoveType = Move
+TreeNodeType = TreeNode
+GameStatusType = GameStatus
+GameStateType = GameState
 
 
 class PieceCollection(TypedDict):

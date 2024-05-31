@@ -3,7 +3,8 @@ from .player import Player
 from .game_logic import Logic
 from .utilities import get_board_string, get_board_representation
 from .move import Move
-from .ai import ChessAI
+from .ai import ChessAI, GameState, TreeNode
+from .game_status import GameStatus
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -12,7 +13,8 @@ if TYPE_CHECKING:
         MoveType,
         LocType,
         MaterialType,
-        MoveHisType
+        MoveHisType,
+        GameStatusType
     )
 from .constants import PIECE_TYPES
 PAWNS, KNIGHTS, BISHOPS, ROOKS, QUEENS, KINGS = PIECE_TYPES
@@ -33,13 +35,17 @@ class Game:
         }
         self.board = self.setup_board()
         self.board_str = get_board_string(self.board)
-        self.game_status = {
-            'game_finished': False,
-            'white_in_check': False,
-            'black_in_check': False,
-            'last_move_was_capture': False
-        }
-        self.move_tree = None
+        self.game_status: 'GameStatusType' = GameStatus()
+
+        game_state = GameState(
+            self.board,
+            self.move_history,
+            self.material,
+            self.white_player,
+            self.black_player,
+            self.game_status
+        )
+        self.move_tree = TreeNode(game_state)
 
     def setup_board(self) -> 'BoardType':
         return [
@@ -90,8 +96,9 @@ class Game:
         self.board_str = get_board_string(self.board)
 
         if self.move_tree is not None:
-            for child_state in self.move_tree['children'].values():
-                move_made = child_state['move_before_current_state']
+            for child_state in self.move_tree.children.values():
+                move_made = child_state.move_before_current_state
+                assert move_made is not None
                 if (
                     move_made.from_loc == from_loc
                     and move_made.to_loc == to_loc
@@ -103,37 +110,42 @@ class Game:
 
     def update_move_tree(self, depth):
         player_index = len(self.move_history) % 2
-        self.move_tree = ChessAI.calculate_deep_moves(
+        game_state = GameState(
             self.board,
             self.move_history,
             self.material,
             self.players[player_index],
             self.players[1-player_index],
-            self.game_status,
+            self.game_status
+        )
+        self.move_tree = TreeNode(game_state)
+        self.move_tree = ChessAI.calculate_deep_moves(
+            self.move_tree,
             depth,
-            self.move_tree
         )
 
     def play_best_move(self):
-        if self.move_tree is None or self.move_tree['best_move'] is None:
+        if self.move_tree is None or self.move_tree.best_move is None:
             raise Exception('Cannot make best move before updating the move tree')
 
-        if len(self.move_history) == 0 or self.move_history[-1].colour != self.move_tree['best_move'].colour:
-            move = self.move_tree['best_move']
+        if len(self.move_history) == 0 or self.move_history[-1].colour != self.move_tree.best_move.colour:
+            move = self.move_tree.best_move
             self.make_move(move.from_loc, move.to_loc, move.special_move)
             return move.from_loc, move.to_loc, move.special_move
 
         last_move = self.move_history[-1]
 
-        for child_state in self.move_tree['children'].values():
-            move_made = child_state['move_before_current_state']
+        for child_state in self.move_tree.children.values():
+            move_made = child_state.move_before_current_state
+            assert move_made is not None
             if (
                 move_made.from_loc == last_move.from_loc
                 and move_made.to_loc == last_move.to_loc
                 and move_made.special_move == last_move.special_move
                 and move_made.colour == last_move.colour
             ):
-                best_move = child_state['best_move']
+                best_move = child_state.best_move
+                assert best_move is not None
                 self.make_move(best_move.from_loc, best_move.to_loc, best_move.special_move)
                 return best_move.from_loc, best_move.to_loc, best_move.special_move
 
