@@ -21,17 +21,16 @@ if TYPE_CHECKING:
         PieceCollectionType,
         PieceType,
         DirectionType,
-        LocType
+        LocType,
+        GameStatusType
     )
 
 from . import settings
-import math
+from .game_status import GameStatus
 from .pieces.knight import Knight
 from .pieces.bishop import Bishop
 from .pieces.rook import Rook
 from .pieces.queen import Queen
-from .pieces.pawn import Pawn
-from .pieces.king import King
 from .constants import PIECE_TYPES
 from .constants import (
     SHORT_CASTLE,
@@ -40,7 +39,7 @@ from .constants import (
     ENPASSANT_RIGHT,
 )
 from .move import Move
-from .player import Player
+from .copy_game_objects import CopyGameObjects
 PAWNS, KNIGHTS, BISHOPS, ROOKS, QUEENS, KINGS = PIECE_TYPES
 
 
@@ -138,7 +137,7 @@ class Logic:
         move: 'MoveType',
         board_str: str,
         check_checks: bool = True
-    ):
+    ) -> 'GameStatusType':
         # set variables
         from_loc = move.from_loc
         to_loc = move.to_loc
@@ -244,23 +243,17 @@ class Logic:
             player, opponent, board, move_history, material, board_str, check_checks
         )
 
-        game_status = {
-            'game_finished': False,
-            f'{player.colour}_in_check': player_in_check,
-            f'{opponent.colour}_in_check': opponent_in_check,
-            'last_move_was_capture': is_capture,
-            'game_result': '',
-            'winner': None,
-            'game_result_message': ''
-        }
+        game_status = GameStatus(last_move_was_capture = is_capture)
+        game_status.set_player_in_check(player.colour, player_in_check)
+        game_status.set_player_in_check(opponent.colour, opponent_in_check)
 
         move_name_suffix = '+' if opponent_in_check else ''
         # check for checkmate
         if opponent_in_check and opponent.num_legal_moves == 0:
-            game_status['game_finished'] = True
-            game_status['game_result'] = 'checkmate'
-            game_status['winner'] = player.colour
-            game_status['game_result_message'] = f'{player.colour} won by checkmate'
+            game_status.game_finished = True
+            game_status.game_result = 'checkmate'
+            game_status.winner = player.colour
+            game_status.game_result_message = f'{player.colour} won by checkmate'
             move_name_suffix = '#'
 
         move.move_name = move_name + move_name_suffix
@@ -268,10 +261,10 @@ class Logic:
         # check for draw
         is_draw, draw_by = Logic.is_draw(board, player, opponent, move_history, opponent_in_check)
         if is_draw:
-            game_status['game_finished'] = True
-            game_status['game_result'] = 'draw'
-            game_status['draw_by'] = draw_by
-            game_status['game_result_message'] = f'game drawn by {draw_by}'
+            game_status.game_finished = True
+            game_status.game_result = 'draw'
+            game_status.draw_by = draw_by
+            game_status.game_result_message = f'game drawn by {draw_by}'
 
         return game_status
 
@@ -366,208 +359,6 @@ class Logic:
         return board
 
     @staticmethod
-    def calculate_deep_moves(
-        board: 'BoardType',
-        move_history: 'MoveHisType',
-        material: 'MaterialType',
-        player: 'PlayerType',
-        opponent: 'PlayerType',
-        game_status,
-        depth: int,
-        currentTree=None,
-        alpha: float = -math.inf,
-        beta: float = math.inf,
-    ):
-        curr_state = {
-            'move_before_current_state': move_history[-1] if len(move_history) > 0 else None,
-            'game_state_after_move': {
-                'board': board,
-                'player': player,  # the player that made the move
-                'opponent': opponent,
-                'move_history': move_history,
-                'material': material,
-                'game_status': game_status,
-                'move_history_str': str(move_history),
-            },
-            'children': {},
-            'best_move': None
-        }
-
-        if currentTree is None:
-            currentTree = curr_state
-
-        def evaluate_position(player: 'PlayerType', opponent: 'PlayerType', material: 'MaterialType', game_status):
-            if game_status['winner'] is not None:
-                return (-1) ** (game_status['winner'] == 'black') * math.inf
-
-            if game_status['game_result'] == 'draw':
-                return 0
-
-            num_legal_moves = [player.num_legal_moves, opponent.num_legal_moves]
-            mat = [0, 0]
-            for i, p in enumerate((player, opponent)):
-                # for piece_type in p.pieces:
-                #     for piece in p.pieces[piece_type]:
-                #         num_legal_moves[i] += len(piece.legal_moves)
-                mat[i] += (
-                    material[p.colour][PAWNS]
-                    + material[p.colour][KNIGHTS] * 3
-                    + material[p.colour][BISHOPS] * 3
-                    + material[p.colour][ROOKS] * 5
-                    + material[p.colour][QUEENS] * 9
-                )
-
-            white_player = 1 - int(player.colour == 'white')
-            black_player = 1 - white_player
-            return mat[white_player] - mat[black_player] + (num_legal_moves[white_player] - num_legal_moves[black_player]) / 50
-
-        if depth == 0:
-            currentTree['eval'] = evaluate_position(player, opponent, material, game_status)
-            return currentTree
-
-        curr_eval = (-1) ** (player.colour == 'white') * math.inf
-
-        legal_moves = []
-        for piece_type in player.pieces:
-            for piece in player.pieces[piece_type]:
-                for move in piece.legal_moves:
-                    from_loc = move.from_loc
-                    to_loc = move.to_loc
-
-                    temp_player = Logic.copy_player(player)
-                    temp_opponent = Logic.copy_player(opponent)
-                    temp_board = Logic.get_board_from_pieces(temp_player.pieces, temp_opponent.pieces)
-                    temp_board_str = get_board_string(temp_board)
-                    temp_material = Logic.copy_material(material)
-
-                    game_status = Logic.make_move(
-                        temp_board,
-                        temp_player,
-                        temp_opponent,
-                        move_history,
-                        temp_material,
-                        Move(from_loc, to_loc, temp_board, temp_board_str, move.special_move),
-                        temp_board_str
-                    )
-                    last_move = move_history.pop()
-                    legal_moves.append({
-                        'temp_board': temp_board,
-                        'temp_player': temp_player,
-                        'temp_opponent': temp_opponent,
-                        'move_history': move_history,
-                        'temp_material': temp_material,
-                        'game_status': game_status,
-                        'move': move,
-                        'last_move': last_move,
-                        'eval_after_move': evaluate_position(temp_player, temp_opponent, temp_material, game_status)
-                    })
-        legal_moves.sort(key=lambda game_after_move: game_after_move['eval_after_move'], reverse=True)
-
-        for game_info in legal_moves:
-            move = game_info['move']
-            if depth > 0 and beta > alpha:
-                move_id = str(move.from_loc) + str(move.to_loc) + str(move.special_move)
-                if (currentTree is not None and move_id in currentTree['children']):
-                    childTree = currentTree['children'][move_id]
-                    childTree = Logic.calculate_deep_moves(
-                        childTree['game_state_after_move']['board'],
-                        childTree['game_state_after_move']['move_history'],
-                        childTree['game_state_after_move']['material'],
-                        childTree['game_state_after_move']['player'],
-                        childTree['game_state_after_move']['opponent'],
-                        childTree['game_state_after_move']['game_status'],
-                        depth - 1,
-                        childTree,
-                        alpha,
-                        beta
-                    )
-                    eval = childTree['eval']
-
-                    max_or_min = max if player.colour == 'white' else min
-                    curr_eval = max_or_min(curr_eval, eval)
-                    if curr_eval == eval:
-                        currentTree['best_move'] = move
-                    alpha_or_beta = alpha if player.colour == 'white' else beta
-                    alpha_or_beta = max_or_min(alpha_or_beta, curr_eval)
-
-                else:
-                    temp_board = game_info['temp_board']
-                    move_history = game_info['move_history']
-                    temp_material = game_info['temp_material']
-                    temp_player = game_info['temp_player']
-                    temp_opponent = game_info['temp_opponent']
-                    game_status = game_info['game_status']
-                    move_history.append(game_info['last_move'])
-
-                    child_state = Logic.calculate_deep_moves(
-                        temp_board,
-                        move_history,
-                        temp_material,
-                        temp_opponent,
-                        temp_player,
-                        game_status,
-                        depth - 1,
-                        None,
-                        alpha,
-                        beta
-                    )
-                    eval = child_state['eval']
-
-                    max_or_min = max if player.colour == 'white' else min
-                    curr_eval = max_or_min(curr_eval, eval)
-                    if curr_eval == eval:
-                        currentTree['best_move'] = move
-                    alpha_or_beta = alpha if player.colour == 'white' else beta
-                    alpha_or_beta = max_or_min(alpha_or_beta, curr_eval)
-
-                    currentTree['children'][move_id] = child_state
-                    move_history.pop()
-
-        currentTree['eval'] = curr_eval
-        return currentTree
-
-    @staticmethod
-    def copy_player(player: 'PlayerType') -> 'PlayerType':
-        new_player: 'PlayerType' = Player(player.colour)
-        new_player.pieces = {
-            PAWNS: [],
-            KNIGHTS: [],
-            BISHOPS: [],
-            ROOKS: [],
-            KINGS: [],
-            QUEENS: []
-        }
-        for piece_type in PIECE_TYPES:
-            for piece in player.pieces[piece_type]:
-                new_player.pieces[piece_type].append(Logic.copy_piece(piece))
-
-        return new_player
-    
-
-    @staticmethod
-    def copy_piece(piece: 'PieceType') -> 'PieceType':
-        piece_type_to_class = {
-            PAWNS: Pawn,
-            KNIGHTS: Knight,
-            BISHOPS: Bishop,
-            ROOKS: Rook,
-            QUEENS: Queen,
-            KINGS: King,
-        }
-        new_piece: PieceType = piece_type_to_class[piece.get_type()](piece.id, piece.loc, piece.colour)
-        new_piece.legal_moves = piece.legal_moves  # TODO: This might mess up stuff, but should be fine for now since
-                                                    # we always recalculate legal moves by reassigning it to an empty array and
-                                                    # filling it
-        if piece.get_type() == KINGS:
-            new_piece.short_castle_rights = piece.short_castle_rights
-            new_piece.long_castle_rights = piece.long_castle_rights
-        return new_piece
-    
-    @staticmethod
-    def copy_material(material: 'MaterialType') -> 'MaterialType':
-        return {colour: {piece_type: material[colour][piece_type] for piece_type in material[colour]} for colour in material}
-
-    @staticmethod
     def in_check_after_move(
             board: 'BoardType',
             move_history: 'MoveHisType',
@@ -580,8 +371,8 @@ class Logic:
         from_loc = move.from_loc
         to_loc = move.to_loc
 
-        temp_player = Logic.copy_player(player)
-        temp_opponent = Logic.copy_player(opponent)
+        temp_player = CopyGameObjects.copy_player(player)
+        temp_opponent = CopyGameObjects.copy_player(opponent)
         temp_board = Logic.get_board_from_pieces(temp_player.pieces, temp_opponent.pieces)
 
         Logic.make_move(
@@ -589,7 +380,7 @@ class Logic:
             temp_player,
             temp_opponent,
             move_history,
-            Logic.copy_material(material),
+            CopyGameObjects.copy_material(material),
             Move(from_loc, to_loc, temp_board, board_str, move.special_move),
             board_str,
             False

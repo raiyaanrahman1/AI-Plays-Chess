@@ -30,6 +30,7 @@ class Move:
         self.from_loc = from_loc
         self.to_loc = to_loc
         self.special_move = special_move
+        self.id = str(self.from_loc) + str(self.to_loc) + str(self.special_move)
         self.move_name: 'None | str' = None
         self.board_str_before_move = board_str_before_move
         self.move_num = -1  # index of move history - set in Logic.make_move()

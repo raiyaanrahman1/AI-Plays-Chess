@@ -112,3 +112,8 @@ cython_debug/
 # Visual Studio Code # 
 .vscode/
 .history
+
+.DS_Store
+
+game_logic copy.py
+game_logic copy 2.py

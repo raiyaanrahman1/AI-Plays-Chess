@@ -49,7 +49,7 @@ def create_game(request):
         'legal_moves': game.get_all_legal_moves(),
         'material': game.material,
         'move_history': [str(move) for move in game.move_history],
-        'game_status': game.game_status,
+        'game_status': vars(game.game_status),
     }
     return JsonResponse(response)
 
@@ -76,8 +76,8 @@ def submit_move(request):
             return JsonResponse(param['message'], safe=False, status=400)
     from_loc = req_from_loc['tuple']
     to_loc = req_to_loc['tuple']
-    if game.game_status['game_finished']:
-        message = game.game_status['game_result_message']
+    if game.game_status.game_finished:
+        message = game.game_status.game_result_message
         return JsonResponse(
             f'Cannot submit move, {message}',
             safe=False,
@@ -93,7 +93,7 @@ def submit_move(request):
         'legal_moves': game.get_all_legal_moves(),
         'material': game.material,
         'move_history': [str(move) for move in game.move_history],
-        'game_status': game.game_status,
+        'game_status': vars(game.game_status),
     }
     return JsonResponse(response)
 
@@ -137,7 +137,7 @@ def play_best_move(request):
         'legal_moves': game.get_all_legal_moves(),
         'material': game.material,
         'move_history': [str(move) for move in game.move_history],
-        'game_status': game.game_status,
+        'game_status': vars(game.game_status),
         'from_loc': from_loc,
         'to_loc': to_loc,
         'special_move': special_move
